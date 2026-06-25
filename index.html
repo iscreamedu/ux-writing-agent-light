@@ -5641,9 +5641,50 @@ ${glossaryStr}
       this._renderGuideList();
       this._renderPopupGuideList();
       this._renderForbiddenList();
-      await this._exportHtml();
+      await this._pushGuideToGithub();
     } catch {
       this.showToast('저장 중 오류가 발생했습니다.', 'error');
+    }
+  },
+
+  async _pushGuideToGithub() {
+    const OWNER = 'iscreamedu';
+    const REPO  = 'ux-writing-agent-serverless';
+    const PATH  = 'guide-data.json';
+
+    let token = localStorage.getItem('gh_pat');
+    if (!token) {
+      token = prompt('GitHub Personal Access Token을 입력하세요 (최초 1회)');
+      if (!token) return;
+      localStorage.setItem('gh_pat', token);
+    }
+
+    const exportData = { little: _mem.little, elementary: _mem.elementary, parent: _mem.parent };
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(exportData, null, 2))));
+
+    try {
+      // 현재 파일 SHA 가져오기
+      const getRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`, {
+        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+      });
+      const getJson = await getRes.json();
+      const sha = getJson.sha;
+
+      // 파일 업데이트
+      const putRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`, {
+        method: 'PUT',
+        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: '가이드 데이터 업데이트', content, sha })
+      });
+
+      if (putRes.ok) {
+        this.showToast('가이드가 깃허브에 저장됐습니다. 1~2분 후 반영돼요.');
+      } else {
+        localStorage.removeItem('gh_pat');
+        this.showToast('저장 실패. 토큰을 확인해주세요.', 'error');
+      }
+    } catch {
+      this.showToast('네트워크 오류가 발생했습니다.', 'error');
     }
   },
   cancelGuideEdit() {
