@@ -19,14 +19,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Inject API secrets
+      - name: Inject API secrets and guide data
         env:
           GEMINI_K: ${{ secrets.GEMINI_K }}
         run: |
           mkdir dist
           cp index.html dist/index.html
           cp guide-data.json dist/guide-data.json
-          python3 -c "import os; f=open('dist/index.html','r',encoding='utf-8'); c=f.read(); f.close(); c=c.replace('__GEMINI_K__',os.environ['GEMINI_K']); f=open('dist/index.html','w',encoding='utf-8'); f.write(c); f.close()"
+          python3 -c "
+import os, json, re
+f=open('dist/index.html','r',encoding='utf-8'); c=f.read(); f.close()
+c=c.replace('__GEMINI_K__',os.environ['GEMINI_K'])
+guide=open('guide-data.json','r',encoding='utf-8').read()
+new_block='/* __DATA_START__ */\nconst EMBEDDED_DATA = '+guide+'\n/* __DATA_END__ */'
+c=re.sub(r'/\* __DATA_START__ \*/.*?/\* __DATA_END__ \*/',new_block,c,flags=re.DOTALL)
+f=open('dist/index.html','w',encoding='utf-8'); f.write(c); f.close()
+"
 
       - uses: actions/configure-pages@v4
 
