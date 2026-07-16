@@ -5783,7 +5783,7 @@ ${glossaryStr}
     const data = {};
     types.forEach(t => {
       data[t] = {
-        forbidden:  Store.getForbidden(t),
+        forbidden:  Store.getForbiddenCategories(t),
         guidelines: Store.getGuidelines(t),
         popupGuide: Store.getPopupGuide(t),
       };
