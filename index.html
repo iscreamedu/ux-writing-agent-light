@@ -3951,7 +3951,7 @@ ${glossaryStr}
     const btn = document.getElementById('char-gemini-btn');
     if (btn) { btn.disabled = true; btn.innerHTML = '개선 요청 중...'; btn.style.opacity = '0.6'; }
     const rightPanel = document.getElementById('right-panel');
-    if (rightPanel) rightPanel.style.display = '';
+    if (rightPanel && State.inputTab !== 'file') rightPanel.style.display = '';
     // 캐릭터 모드: gemini-result-block 숨기고 guide-section 전체 텍스트로 표시
     const geminiBlock = document.getElementById('gemini-result-block');
     const guideSection = document.getElementById('guide-section');
