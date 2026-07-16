@@ -248,6 +248,21 @@ textarea:focus, input:focus, select:focus {
   <!-- ── HOME VIEW ─────────────────────────────────────── -->
   <div id="view-home">
 
+    <!-- 탭: 텍스트 / 파일 -->
+    <div class="flex justify-center mb-6">
+      <div class="flex items-center gap-1 bg-slate-100 rounded-full p-1">
+        <button id="tab-text" onclick="App.setInputTab('text')"
+          class="input-tab-btn active flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+          텍스트
+        </button>
+        <button id="tab-file" onclick="App.setInputTab('file')"
+          class="input-tab-btn flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          파일
+        </button>
+      </div>
+    </div>
 
     <!-- 입력 카드: 두 개의 독립 박스 -->
     <div class="flex gap-4">
@@ -1598,6 +1613,8 @@ const App = {
     if (charRow) charRow.style.display = tab === 'text' ? '' : 'none';
     const rightPanel = document.getElementById('right-panel');
     if (rightPanel) rightPanel.style.display = tab === 'text' ? '' : 'none';
+    const arrow = document.getElementById('panel-arrow');
+    if (arrow) arrow.style.display = tab === 'text' ? '' : 'none';
     this._updateAnalyzeBtn();
   },
 
@@ -3123,10 +3140,15 @@ ${glossaryStr}
       const trimmedLower = trimmed.toLowerCase();
       Store.getForbiddenCategories(State.userType).forEach(cat => {
         (cat.words || []).forEach(w => {
-          if (trimmedLower.includes(w.toLowerCase()) && !issues.some(i => i.description.includes(w))) {
-            const label = cat.category || '금지어';
-            issues.push({ type:'forbidden', severity:'error', description:`"${w}" 사용 금지 (${label})`, suggestion: '', reason: cat.reason || '' });
-          }
+          const wLower = w.toLowerCase();
+          const idx = trimmedLower.indexOf(wLower);
+          if (idx === -1 || issues.some(i => i.description.includes(w))) return;
+          // 뒤에 조사·어미가 아닌 한글이 바로 붙으면 복합어이므로 스킵
+          const afterChar = trimmedLower[idx + wLower.length];
+          const KO_PARTICLES = /^[로으로에서에게한테부터까지도만이가을를은는와과]/;
+          if (afterChar && /[가-힣]/.test(afterChar) && !KO_PARTICLES.test(afterChar)) return;
+          const label = cat.category || '금지어';
+          issues.push({ type:'forbidden', severity:'error', description:`"${w}" 사용 금지 (${label})`, suggestion: '', reason: cat.reason || '' });
         });
       });
       // 관리자 등록 UX Writing 가이드 검사
@@ -3183,6 +3205,11 @@ ${glossaryStr}
               const re = new RegExp(coreEsc + KO_SFXS + '[.!?]?', 'i');
               const m = trimmedNorm.match(re);
               if (!m) continue;
+              // suffix 없이 단순 매칭됐는데 뒤에 한글이 붙으면 복합어이므로 스킵 (예: 활용법, 활용도)
+              if (m[0] === badCore) {
+                const nextChar = trimmedNorm[m.index + m[0].length];
+                if (nextChar && /[가-힣]/.test(nextChar)) continue;
+              }
               // 1글자 단어는 앞뒤 모두 한글이 없어야 매칭 (단독 사용 시에만 인식)
               if (badCore.replace(/\s+/g, '').length === 1) {
                 const before = trimmedNorm.slice(0, m.index);
@@ -3205,7 +3232,7 @@ ${glossaryStr}
               const simpleSwap = trimmedNorm.replace(re, t.good);
               const _badCore = badCore, _good = t.good, _matched = m[0];
               const _applyTo = text => this._morphAwareSuggestion(text, _badCore, _good, _matched);
-              issues.push({ type:'ux_writing', severity:'warning', description:`"${badWord}" → "${t.good}" (${rule})`, suggestion, _applyTo, reason: g.reason || '', guideTitle: g.rule || '' });
+              issues.push({ type:'ux_writing', severity:'warning', description:`"${badCore}" → "${t.good}" (${rule})`, suggestion, _applyTo, reason: g.reason || '', guideTitle: g.rule || '' });
               break; // 한 term당 첫 번째 매칭만
             }
           });
@@ -4926,7 +4953,8 @@ ${glossaryStr}
             return `
             <div class="${padding} ${border}">
               ${countBadgeForbidden ? `<div class="flex justify-end mb-1.5">${countBadgeForbidden}</div>` : ''}
-              <div class="text-sm text-slate-700 px-3 py-2 rounded-md border border-slate-200 break-words mb-3">${highlightedOriginal}</div>
+              <div class="text-sm text-slate-700 px-3 py-2 rounded-md border border-slate-200 break-words mb-2">${highlightedOriginal}</div>
+              <div class="flex flex-wrap gap-1 mb-1">${badges}</div>
               ${geminiSection}
             </div>`;
           }
@@ -5653,11 +5681,7 @@ ${glossaryStr}
     const PATH  = 'guide-data.json';
 
     let token = localStorage.getItem('gh_pat');
-    if (!token) {
-      token = prompt('GitHub Personal Access Token을 입력하세요 (최초 1회)');
-      if (!token) return;
-      localStorage.setItem('gh_pat', token);
-    }
+    if (!token) return;
 
     const exportData = { little: _mem.little, elementary: _mem.elementary, parent: _mem.parent };
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(exportData, null, 2))));
