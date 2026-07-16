@@ -5681,7 +5681,11 @@ ${glossaryStr}
     const PATH  = 'guide-data.json';
 
     let token = localStorage.getItem('gh_pat');
-    if (!token) return;
+    if (!token) {
+      token = prompt('GitHub Personal Access Token을 입력하세요 (최초 1회)\n\nGitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens\n권한: Contents (read & write)');
+      if (!token) return;
+      localStorage.setItem('gh_pat', token);
+    }
 
     const exportData = { little: _mem.little, elementary: _mem.elementary, parent: _mem.parent };
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(exportData, null, 2))));
