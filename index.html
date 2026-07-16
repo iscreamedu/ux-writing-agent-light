@@ -1129,18 +1129,12 @@ const EMBEDDED_DATA = {
 const EMBEDDED_HISTORY = [];
 /* __HISTORY_END__ */
 
-// 런타임 in-memory 데이터 (EMBEDDED_DATA 기준, 편집 시 메모리에서 수정)
-const _mem = (() => {
-  try {
-    const saved = localStorage.getItem('ux_guide_data');
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return {
-    little:     JSON.parse(JSON.stringify(EMBEDDED_DATA.little)),
-    elementary: JSON.parse(JSON.stringify(EMBEDDED_DATA.elementary)),
-    parent:     JSON.parse(JSON.stringify(EMBEDDED_DATA.parent)),
-  };
-})();
+// 런타임 in-memory 데이터 (EMBEDDED_DATA 항상 우선 — localStorage 무시)
+const _mem = {
+  little:     JSON.parse(JSON.stringify(EMBEDDED_DATA.little)),
+  elementary: JSON.parse(JSON.stringify(EMBEDDED_DATA.elementary)),
+  parent:     JSON.parse(JSON.stringify(EMBEDDED_DATA.parent)),
+};
 
 // ────────────────────────────────────────
 // 데이터 스토어 (in-memory, EMBEDDED_DATA 기준)
