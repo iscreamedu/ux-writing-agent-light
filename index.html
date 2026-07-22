@@ -6921,7 +6921,7 @@ ${glossaryStr}
   _normTerm(s) { return s.trim().toLowerCase().replace(/[.,?!·。，、？！\s]+$/g, '').replace(/^\s*[.,?!·。，、？！]+/, ''); },
   _showDupWordConfirm(word, onGoto, onContinue) {
     const modal = document.getElementById('modal-dup-word');
-    document.getElementById('dup-word-name').textContent = `"${word}"`;
+    document.getElementById('dup-word-name').textContent = word;
     const closeModal = () => modal.classList.add('hidden');
     document.getElementById('dup-word-goto').onclick = () => { closeModal(); setTimeout(onGoto, 100); };
     document.getElementById('dup-word-continue').onclick = () => { closeModal(); onContinue(); };
