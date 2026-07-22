@@ -2615,6 +2615,8 @@ ${text}`;
 규칙:
 - 맞춤법, 표현, 문장 부호(!, ?, . 등)는 절대 바꾸지 마세요
 - 느낌표(!)나 물음표(?)가 있으면 그대로 유지
+- 원문이 이미 맞춤법·문법 오류가 있어 어색한 경우, 억지로 띄어쓰기를 추가하지 말고 원문 그대로 출력하세요
+- "~해 하-" (예: "확인해 할까요") 같이 공백 추가 시 문법적으로 이상해지는 경우 원문 그대로 출력
 - 입력 배열과 동일한 길이로 출력
 - 오류 없으면 원문 그대로 출력
 반드시 JSON만 응답: {"results":["교정된문장1","교정된문장2",...]}
@@ -2648,7 +2650,15 @@ ${text}`;
         if (origPuncts[idx]) {
           fixed = fixed.replace(/[.!?]*$/, '') + origPuncts[idx];
         }
-        if (fixed !== item.improved) item.improved = fixed;
+        if (fixed !== item.improved) {
+          item.improved = fixed;
+          // 발견된 이슈 패널에 띄어쓰기 이슈 추가
+          const dup = item.issues.some(i => i.type === 'spelling' && i.subtype === 'spacing' && i.description === `${item.original} → ${fixed}`);
+          if (!dup) {
+            item.issues.push({ type: 'spelling', severity: 'error', description: `${item.original} → ${fixed}`, suggestion: fixed, subtype: 'spacing' });
+            item.hasIssues = true;
+          }
+        }
       });
     } catch { /* 실패 시 무시 */ }
   },
