@@ -2527,6 +2527,8 @@ const App = {
       const deduped = item.improved.split(/\s+/).filter((w, i, arr) => i === 0 || w !== arr[i - 1]).join(' ');
       if (deduped !== item.improved) item.improved = deduped;
     });
+    // 가이드 치환 후 개선안 띄어쓰기 Gemini 교정
+    await this._fixImprovedSpacingWithGemini(result.items);
     this._renderInputHighlight(text, spell.issues);
     this._renderSpellStatus(spell);
 
@@ -2597,6 +2599,56 @@ ${text}`;
     } catch (e) {
       return { issues: [] };
     }
+  },
+
+  async _fixImprovedSpacingWithGemini(items) {
+    try {
+      const apiKey = _dk();
+      if (!apiKey || apiKey === '__GEMINI_K__') return;
+      // 개선안이 있는 항목만 수집
+      const targets = items.filter(i => i.improved && i.improved !== i.original);
+      if (!targets.length) return;
+      const combined = targets.map((i, idx) => `${idx + 1}. ${i.improved}`).join('\n');
+      const prompt = `아래 한국어 문장들에서 띄어쓰기 오류만 교정해주세요. 맞춤법이나 표현은 바꾸지 말고 띄어쓰기만 수정하세요.
+
+규칙:
+- 입력 줄 수와 동일하게 출력 (N개 입력 → N개 출력)
+- 번호 유지 ("1. 문장" 형식)
+- 오류 없으면 원문 그대로 출력
+
+반드시 JSON만 응답:
+{"results":["교정된문장1","교정된문장2",...]}
+
+문장:
+${combined}`;
+
+      const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+      let raw = null;
+      for (const model of models) {
+        try {
+          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0, maxOutputTokens: 2048, responseMimeType: 'application/json' }
+            })
+          });
+          if (!resp.ok) continue;
+          const data = await resp.json();
+          raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (raw) break;
+        } catch { continue; }
+      }
+      if (!raw) return;
+      const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
+      const results = parsed.results || [];
+      targets.forEach((item, idx) => {
+        if (results[idx] && results[idx] !== item.improved) {
+          item.improved = results[idx];
+        }
+      });
+    } catch { /* 실패 시 무시 */ }
   },
 
   // 맞춤법 검사 비활성화 (서버 불필요)
