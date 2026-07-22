@@ -2608,19 +2608,17 @@ ${text}`;
       // 개선안이 있는 항목 (가이드 치환 없어도 띄어쓰기 교정 위해 모두 포함)
       const targets = items.filter(i => i.improved);
       if (!targets.length) return;
-      const combined = targets.map((i, idx) => `${idx + 1}. ${i.improved}`).join('\n');
-      const prompt = `아래 한국어 문장들에서 띄어쓰기 오류만 교정해주세요. 맞춤법이나 표현은 바꾸지 말고 띄어쓰기만 수정하세요.
-
+      // 원래 끝 문장부호 보존 (!, ? 등)
+      const origPuncts = targets.map(i => (i.improved.match(/[!?]+$/) || [''])[0]);
+      const sentences = targets.map(i => i.improved);
+      const prompt = `아래 한국어 문장 배열에서 띄어쓰기 오류만 교정하세요.
 규칙:
-- 입력 줄 수와 동일하게 출력 (N개 입력 → N개 출력)
-- 번호 유지 ("1. 문장" 형식)
+- 맞춤법, 표현, 문장 부호(!, ?, . 등)는 절대 바꾸지 마세요
+- 느낌표(!)나 물음표(?)가 있으면 그대로 유지
+- 입력 배열과 동일한 길이로 출력
 - 오류 없으면 원문 그대로 출력
-
-반드시 JSON만 응답:
-{"results":["교정된문장1","교정된문장2",...]}
-
-문장:
-${combined}`;
+반드시 JSON만 응답: {"results":["교정된문장1","교정된문장2",...]}
+문장: ${JSON.stringify(sentences)}`;
 
       const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
       let raw = null;
@@ -2642,14 +2640,15 @@ ${combined}`;
       }
       if (!raw) return;
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
-      const results = (parsed.results || []).map(r =>
-        // "1. 문장" 형식의 번호 prefix 제거
-        String(r).replace(/^\d+\.\s*/, '').trim()
-      );
+      const results = (parsed.results || []).map(r => String(r).replace(/^\d+\.\s*/, '').trim());
       targets.forEach((item, idx) => {
-        if (results[idx] && results[idx] !== item.improved) {
-          item.improved = results[idx];
+        let fixed = results[idx];
+        if (!fixed) return;
+        // 원래 끝 문장부호 복원 (Gemini가 변경했을 경우 대비)
+        if (origPuncts[idx]) {
+          fixed = fixed.replace(/[.!?]*$/, '') + origPuncts[idx];
         }
+        if (fixed !== item.improved) item.improved = fixed;
       });
     } catch { /* 실패 시 무시 */ }
   },
