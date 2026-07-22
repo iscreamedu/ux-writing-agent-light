@@ -26,6 +26,7 @@ jobs:
           mkdir dist
           cp index.html dist/index.html
           cp guide-data.json dist/guide-data.json
+          cp spell-data.json dist/spell-data.json
           python3 inject.py
 
       - uses: actions/configure-pages@v4
