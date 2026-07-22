@@ -6781,11 +6781,6 @@ ${glossaryStr}
   },
   _termDragStart(e, gi, ti) {
     if (e.target.closest('input, textarea, [contenteditable]')) { e.preventDefault(); return; }
-    if (ti === -2) {
-      const bads = this._getBadTerms(gi);
-      const good = document.getElementById(`guide-term-good-${gi}`)?.value.trim();
-      if (!bads.length || !good) { e.preventDefault(); return; }
-    }
     e.stopPropagation();
     this._termDragGi = gi; this._termDragSrc = ti; this._termDragAfter = false;
     e.dataTransfer.effectAllowed = 'move';
