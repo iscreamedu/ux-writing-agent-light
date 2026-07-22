@@ -815,7 +815,7 @@ textarea:focus, input:focus, select:focus {
     </div>
     <div class="px-6 pb-6 flex flex-col gap-2">
       <button id="dup-word-goto" class="w-full py-2.5 bg-brand-600 text-white text-sm font-semibold rounded-full hover:bg-brand-700 transition">기존 항목으로 이동</button>
-      <button id="dup-word-continue" class="hidden"></button>
+      <button id="dup-word-continue" class="w-full py-2.5 border border-slate-300 text-slate-700 text-sm font-medium rounded-full hover:bg-slate-50 transition">계속 작성하기</button>
     </div>
   </div>
 </div>
@@ -2579,20 +2579,38 @@ const App = {
     return issues;
   },
 
-  // 개선안 띄어쓰기 규칙 교정 (SPELL_DATA 기반)
+  // 개선안 띄어쓰기 규칙 교정 (SPELL_DATA 기반 + 조사 규칙)
   _fixSpacingWithData(text) {
     let result = text;
+    // 1) SPELL_DATA 패턴 교정
     (SPELL_DATA.standard || []).forEach(entry => {
       if (!entry.wrong || !entry.correct || entry.wrong === entry.correct) return;
       if (entry.note) return;
-      // 띄어쓰기만 다른 패턴을 교정
       const wrongNorm = entry.wrong.replace(/\s+/g, '');
       const correctNorm = entry.correct.replace(/\s+/g, '');
-      if (wrongNorm !== correctNorm) return; // 단순 띄어쓰기 차이가 아니면 스킵
+      if (wrongNorm !== correctNorm) return;
       const esc = entry.wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       result = result.replace(new RegExp(esc, 'g'), entry.correct);
     });
+    // 2) 한국어 조사/어미 기반 자동 띄어쓰기
+    result = this._autoKoreanSpacing(result);
     return result;
+  },
+
+  // 조사·어미 뒤 단어 경계에 공백 삽입 (보수적 규칙 — 오탐 최소화)
+  _autoKoreanSpacing(text) {
+    let t = text;
+    // 목적격(을/를) + 한글 → 공백: "보상을받" → "보상을 받"
+    t = t.replace(/(을|를)([가-힣])/g, '$1 $2');
+    // 처소·방향격(에서/에게/한테/부터/까지) + 한글 → 공백
+    t = t.replace(/(에서|에게|한테|부터|까지)([가-힣])/g, '$1 $2');
+    // 조격(으로/로) + 특정 한글 시작 → 공백 (이/가/는/은/와/과 등 연속 조사 제외)
+    t = t.replace(/(으로|로)([나다마바사아자차카타파하])([가-힣])/g, '$1 $2$3');
+    // 공동격(와/과) + 한글 → 공백
+    t = t.replace(/(와|과)([가-힣])/g, '$1 $2');
+    // 종결어미 + 한글 → 공백 (새 문장/단어 시작)
+    t = t.replace(/(었어요|았어요|었습니다|았습니다|겠습니다|겠어요|네요|군요)([가-힣])/g, '$1 $2');
+    return t;
   },
 
   async _geminiAnalyzeAndFix(originalText, result) {
