@@ -5085,8 +5085,17 @@ ${glossaryStr}
               const m = i.description.match(/^"(.+?)"\s*사용 금지\s*\((.+?)\)/);
               return m ? m[2] : '금지어';
             }))];
-          const forbiddenBadgeSpans = forbiddenLabels.map(l =>
-            `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-600"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${this._esc(l)}</span>`);
+          const _forbidCats = Store.getForbiddenCategories(State.userType);
+          const forbiddenBadgeSpans = forbiddenLabels.map(l => {
+            const catReason = _forbidCats.find(c => c.category === l)?.reason || '';
+            const tooltip = catReason
+              ? `style="position:relative;cursor:default;" onmouseenter="this.querySelector('.fb-tip').style.display='block'" onmouseleave="this.querySelector('.fb-tip').style.display='none'"`
+              : '';
+            const tipHtml = catReason
+              ? `<span class="fb-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1e293b;color:#f8fafc;font-size:11px;white-space:nowrap;border-radius:6px;padding:4px 10px;z-index:99;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);">${this._esc(catReason)}<span style="position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1e293b;"></span></span>`
+              : '';
+            return `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-600" ${tooltip}><svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${this._esc(l)}${tipHtml}</span>`;
+          });
           const allBadgesHtml = guideBadgeSpans.length
             ? `<div class="flex flex-wrap gap-1 mt-1.5">${guideBadgeSpans.join('')}</div>` : '';
           const pageBadge = '';
@@ -5263,6 +5272,9 @@ ${glossaryStr}
             const isForbidden = /사용\s*금지/.test(rest);
             const main   = (reasonMatch ? reasonMatch[1].trim() : rest).replace(/\s*권장$/, '').replace(/\s*사용\s*금지\s*$/, '').replace(/["""'']/g, '').trim();
             const reason = reasonMatch ? reasonMatch[2].trim() : '';
+            const catGuideReason = isForbidden && reason
+              ? (Store.getForbiddenCategories(State.userType).find(c => c.category === reason)?.reason || '')
+              : '';
             const cardStyle = isForbidden
               ? 'flex flex-col gap-1.5 p-2.5 rounded-lg border bg-red-50 border-red-200'
               : 'flex flex-col gap-1.5 p-2.5 rounded-lg border bg-slate-50 border-slate-100';
@@ -5275,7 +5287,7 @@ ${glossaryStr}
                 <span class="${mainTextCls}">${this._esc(main)}</span>
                 ${cnt > 1 ? `<span class="${badgeCls}">${cnt}</span>` : ''}
               </div>
-              ${reason ? `<span class="${reasonCls}">${this._esc(reason)}</span>` : ''}
+              ${reason ? `<span class="${reasonCls}" ${catGuideReason ? `style="position:relative;cursor:default;" onmouseenter="this.querySelector('.fb-tip').style.display='block'" onmouseleave="this.querySelector('.fb-tip').style.display='none'"` : ''}>${this._esc(reason)}${catGuideReason ? `<span class="fb-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1e293b;color:#f8fafc;font-size:11px;white-space:nowrap;border-radius:6px;padding:4px 10px;z-index:99;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);">${this._esc(catGuideReason)}<span style="position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1e293b;"></span></span>` : ''}</span>` : ''}
             </li>`;
           }).join('')
         : '';
