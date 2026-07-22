@@ -6752,6 +6752,10 @@ ${glossaryStr}
             <div id="guide-term-ebad-${i}-${j}" class="min-w-0 flex flex-wrap gap-1 items-center border border-slate-200 rounded px-2 py-1 focus-within:border-red-300 cursor-text bg-white" style="flex:2" onmousedown="event.stopPropagation()" ondragstart="event.preventDefault()" onclick="this.querySelector('input').focus()">${chipsHtml}<input type="text" class="flex-1 min-w-[40px] text-xs outline-none bg-transparent text-red-400 placeholder-slate-300" placeholder="${badChips.length ? '' : '개선 전'}" onkeydown="App._existingBadKey(event,${i},${j})" onblur="App._existingBadBlur(event,${i},${j})" onmousedown="event.stopPropagation()" /></div>
             <span class="text-xs text-slate-400 flex-shrink-0 self-center">→</span>
             <input type="text" id="guide-term-egood-${i}-${j}" value="${this._esc(t.good||'')}" placeholder="개선 후" class="min-w-0 text-xs border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-green-300 text-green-600" style="flex:1" onchange="App._updateGuideTerm(${i},${j},'good',this.value)" onmousedown="event.stopPropagation()" ondragstart="event.preventDefault()" />
+            <div class="relative flex-shrink-0" onmousedown="event.stopPropagation()">
+              <button onclick="event.stopPropagation();App._toggleMoveMenu(event,${i},${j})" class="text-slate-300 hover:text-indigo-400 p-0.5 rounded" title="다른 분류로 이동"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+              <div id="move-menu-${i}-${j}" class="hidden absolute right-0 top-6 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]"></div>
+            </div>
             <button onclick="event.stopPropagation();App._deleteGuideTerm(${i},${j})" class="text-slate-300 hover:text-red-400 p-0.5 rounded flex-shrink-0" title="삭제" onmousedown="event.stopPropagation()"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
           </div>`;
         }).join('');
@@ -7283,6 +7287,43 @@ ${glossaryStr}
     guidelines[i] = { ...guidelines[i], terms };
     Store.setGuidelines(this._adminTab, guidelines);
     this._renderGuideList();
+  },
+  _toggleMoveMenu(e, gi, ti) {
+    e.stopPropagation();
+    const menuId = `move-menu-${gi}-${ti}`;
+    // 다른 열려있는 메뉴 닫기
+    document.querySelectorAll('[id^="move-menu-"]').forEach(m => { if (m.id !== menuId) m.classList.add('hidden'); });
+    const menu = document.getElementById(menuId);
+    if (!menu) return;
+    if (!menu.classList.contains('hidden')) { menu.classList.add('hidden'); return; }
+    const guidelines = Store.getGuidelines(this._adminTab);
+    menu.innerHTML = guidelines.map((g, idx) => {
+      if (idx === gi) return '';
+      const label = g.rule || `그룹 ${idx + 1}`;
+      return `<button class="w-full text-left text-xs px-3 py-1.5 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 truncate" onclick="event.stopPropagation();App._moveTermToGroup(${gi},${ti},${idx})">${this._esc(label)}</button>`;
+    }).join('');
+    menu.classList.remove('hidden');
+    // 외부 클릭 시 닫기
+    const close = (ev) => { if (!menu.contains(ev.target)) { menu.classList.add('hidden'); document.removeEventListener('click', close); } };
+    setTimeout(() => document.addEventListener('click', close), 0);
+  },
+  _moveTermToGroup(fromGi, fromTi, toGi) {
+    // 현재 DOM 상태를 먼저 Store에 반영
+    const guidelines = Store.getGuidelines(this._adminTab);
+    const fromTerms = [...(guidelines[fromGi].terms || [])];
+    const term = fromTerms[fromTi];
+    if (!term) return;
+    const toTerms = [...(guidelines[toGi].terms || [])];
+    fromTerms.splice(fromTi, 1);
+    toTerms.push(term);
+    const updated = guidelines.map((g, idx) => {
+      if (idx === fromGi) return { ...g, terms: fromTerms };
+      if (idx === toGi)   return { ...g, terms: toTerms };
+      return g;
+    });
+    Store.setGuidelines(this._adminTab, updated);
+    this._renderGuideList();
+    this.showToast(`"${guidelines[toGi].rule || '선택한 분류'}"로 이동했습니다.`);
   },
   _deleteGuideTerm(i, j) {
     // deep clone으로 _mem 원본 참조 단절 후 index 기반 제거
