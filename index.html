@@ -6919,12 +6919,15 @@ ${glossaryStr}
     container.classList.add('border-dashed');
   },
   _normTerm(s) { return s.trim().toLowerCase().replace(/[.,?!·。，、？！\s]+$/g, '').replace(/^\s*[.,?!·。，、？！]+/, ''); },
+  _dupWordSkipSet: new Set(),
   _showDupWordConfirm(word, onGoto, onContinue) {
+    const key = word.trim().toLowerCase();
+    if (this._dupWordSkipSet.has(key)) { onContinue(); return; }
     const modal = document.getElementById('modal-dup-word');
     document.getElementById('dup-word-name').textContent = word;
     const closeModal = () => modal.classList.add('hidden');
     document.getElementById('dup-word-goto').onclick = () => { closeModal(); setTimeout(onGoto, 100); };
-    document.getElementById('dup-word-continue').onclick = () => { closeModal(); onContinue(); };
+    document.getElementById('dup-word-continue').onclick = () => { this._dupWordSkipSet.add(key); closeModal(); onContinue(); };
     document.getElementById('dup-word-cancel').onclick = closeModal;
     modal.classList.remove('hidden');
   },
