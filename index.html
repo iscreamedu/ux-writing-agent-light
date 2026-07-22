@@ -6824,6 +6824,22 @@ ${glossaryStr}
       this._renderGuideList();
       return;
     }
+    // 드롭 전에 현재 DOM에 표시된 모든 term의 bad/good 값을 Store에 동기화
+    const allGs = Store.getGuidelines(this._adminTab);
+    allGs.forEach((g, gIdx) => {
+      (g.terms || []).forEach((t, tIdx) => {
+        if (t._section !== undefined) return;
+        const badContainer = document.getElementById(`guide-term-ebad-${gIdx}-${tIdx}`);
+        if (badContainer) {
+          const chips = [...badContainer.querySelectorAll('[data-chip]')].map(el => el.dataset.chip);
+          const inputVal = badContainer.querySelector('input')?.value.trim();
+          if (inputVal) chips.push(inputVal);
+          if (chips.length) this._updateGuideTerm(gIdx, tIdx, 'bad', chips.join(','));
+        }
+        const goodEl = document.getElementById(`guide-term-egood-${gIdx}-${tIdx}`);
+        if (goodEl) this._updateGuideTerm(gIdx, tIdx, 'good', goodEl.value);
+      });
+    });
     const guidelines = [...Store.getGuidelines(this._adminTab)];
     const terms = [...(guidelines[gi].terms || [])];
     const [moved] = terms.splice(src, 1);
