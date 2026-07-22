@@ -3430,7 +3430,9 @@ ${glossaryStr}
               const simpleSwap = trimmedNorm.replace(re, t.good);
               const _badCore = badCore, _good = t.good, _matched = m[0];
               const _applyTo = text => this._morphAwareSuggestion(text, _badCore, _good, _matched);
-              issues.push({ type:'ux_writing', severity:'warning', description:`"${badCore}" → "${t.good}" (${rule})`, suggestion, _applyTo, reason: g.reason || '', guideTitle: g.rule || '' });
+              const matchedPunct = (m[0].match(/[.!?]+$/) || [''])[0];
+              const goodDisplay = matchedPunct ? t.good.replace(/[.!?]*$/, '') + matchedPunct : t.good;
+              issues.push({ type:'ux_writing', severity:'warning', description:`"${m[0]}" → "${goodDisplay}" (${rule})`, suggestion, _applyTo, reason: g.reason || '', guideTitle: g.rule || '' });
               break; // 한 term당 첫 번째 매칭만
             }
           });
