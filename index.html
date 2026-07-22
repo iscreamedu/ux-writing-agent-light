@@ -7264,9 +7264,9 @@ ${glossaryStr}
     this._renderGuideList();
   },
   _deleteGuideTerm(i, j) {
-    const guidelines = [...Store.getGuidelines(this._adminTab)];
-    const terms = [...(guidelines[i].terms||[])];
-    terms.splice(j, 1);
+    // deep clone으로 _mem 원본 참조 단절 후 index 기반 제거
+    const guidelines = JSON.parse(JSON.stringify(Store.getGuidelines(this._adminTab)));
+    const terms = (guidelines[i].terms || []).filter((_, k) => k !== j);
     guidelines[i] = { ...guidelines[i], terms };
     Store.setGuidelines(this._adminTab, guidelines);
     this._renderGuideList();
