@@ -283,7 +283,17 @@
     ]
   },
   "parent": {
-    "forbidden": [],
+    "forbidden": [
+      {
+        "category": "긍정적인 표현을 사용한다.",
+        "words": [
+          "지연",
+          "미달",
+          "부진",
+          "취약"
+        ]
+      }
+    ],
     "guidelines": [
       {
         "rule": "주체",
