@@ -2598,7 +2598,10 @@ ${originalText}
           if (raw) break;
         } catch { continue; }
       }
-      if (!raw) return;
+      if (!raw) {
+        this.showToast('Gemini API 요청 한도를 초과했어요. 잠시 후 다시 시도해 주세요.', 'warn');
+        return;
+      }
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
 
       // 작업1 결과: 맞춤법/표준어 이슈 머지
