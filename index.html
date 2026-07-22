@@ -2475,8 +2475,9 @@ const App = {
     document.getElementById('results-content').classList.add('hidden');
     await this._runProgressSteps();
 
-    // Step 1: 맞춤법 검사 (병렬 시작)
+    // Step 1: 맞춤법 검사 (병렬 시작) — 규칙 기반 + Gemini 병렬
     const spellPromise = this._checkSpelling(text);
+    const geminiSpellPromise = this._checkSpellingWithGemini(text);
 
     // Step 2: 가이드 규칙 기반 분석
     const result = this._demoAnalysis(text);
@@ -2495,9 +2496,10 @@ const App = {
     // Kiwi 형태소 분석으로 suggestion 보강 (서버 준비된 경우에만)
     await this._kiwiEnhance(result);
 
-    // Step 1 완료 대기 후 머지
+    // Step 1 완료 대기 후 머지 (규칙 기반 + Gemini 합산)
     const spell = await spellPromise;
-    this._mergeSpellIssues(result, spell.issues);
+    const geminiSpell = await geminiSpellPromise;
+    this._mergeSpellIssues(result, [...spell.issues, ...geminiSpell.issues]);
     // 가이드 규칙 최종 우선: 맞춤법 머지 후 UX Writing 이슈 재적용
     result.items.forEach(item => {
       const guideIssues = item.issues.filter(i =>
@@ -2539,6 +2541,62 @@ const App = {
 
   async _runProgressSteps() {
     // 스텝 UI 제거됨 — 즉시 반환
+  },
+
+  async _checkSpellingWithGemini(text) {
+    try {
+      const apiKey = _dk();
+      if (!apiKey || apiKey === '__GEMINI_K__') return { issues: [] };
+      const prompt = `아래 한국어 텍스트에서 맞춤법, 띄어쓰기, 표준어 오류를 모두 찾아주세요.
+
+오류 유형(subtype):
+- "spell": 맞춤법 오류 (예: 됬다→됐다, 안되→안 돼, 왠만하면→웬만하면)
+- "spacing": 띄어쓰기 오류 (예: 이어서진행→이어서 진행, 진행중→진행 중)
+- "standard": 표준어 오류 (예: 로서/로써 혼동, 가르치다/가리키다 혼동)
+
+규칙:
+- 오류가 없으면 빈 배열 반환
+- token은 원문에 실제로 존재하는 문자열만 사용
+- suggestion은 수정된 올바른 표현
+- 홈런, 학습창, 차시 등 서비스 고유어는 오류로 보지 말 것
+- UX Writing 스타일(존댓말 변환 등)은 제외하고 순수 맞춤법/띄어쓰기/표준어만 검사
+
+반드시 JSON만 응답 (설명 없이):
+{"issues":[{"token":"오류단어","suggestion":"수정단어","subtype":"spell|spacing|standard"}]}
+
+텍스트:
+${text}`;
+
+      const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+      let raw = null;
+      for (const model of models) {
+        try {
+          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0, maxOutputTokens: 1024, responseMimeType: 'application/json' }
+            })
+          });
+          if (!resp.ok) continue;
+          const data = await resp.json();
+          raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (raw) break;
+        } catch { continue; }
+      }
+      if (!raw) return { issues: [] };
+      const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
+      const issues = (parsed.issues || []).map(i => ({
+        token: i.token,
+        suggestion: i.suggestion,
+        description: `${i.token} → ${i.suggestion}`,
+        subtype: i.subtype || 'spell'
+      })).filter(i => i.token && i.suggestion && i.token !== i.suggestion);
+      return { issues };
+    } catch (e) {
+      return { issues: [] };
+    }
   },
 
   // 맞춤법 검사 비활성화 (서버 불필요)
