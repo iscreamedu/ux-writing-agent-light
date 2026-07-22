@@ -2605,8 +2605,8 @@ ${text}`;
     try {
       const apiKey = _dk();
       if (!apiKey || apiKey === '__GEMINI_K__') return;
-      // 개선안이 있는 항목만 수집
-      const targets = items.filter(i => i.improved && i.improved !== i.original);
+      // 개선안이 있는 항목 (가이드 치환 없어도 띄어쓰기 교정 위해 모두 포함)
+      const targets = items.filter(i => i.improved);
       if (!targets.length) return;
       const combined = targets.map((i, idx) => `${idx + 1}. ${i.improved}`).join('\n');
       const prompt = `아래 한국어 문장들에서 띄어쓰기 오류만 교정해주세요. 맞춤법이나 표현은 바꾸지 말고 띄어쓰기만 수정하세요.
@@ -2642,7 +2642,10 @@ ${combined}`;
       }
       if (!raw) return;
       const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
-      const results = parsed.results || [];
+      const results = (parsed.results || []).map(r =>
+        // "1. 문장" 형식의 번호 prefix 제거
+        String(r).replace(/^\d+\.\s*/, '').trim()
+      );
       targets.forEach((item, idx) => {
         if (results[idx] && results[idx] !== item.improved) {
           item.improved = results[idx];
