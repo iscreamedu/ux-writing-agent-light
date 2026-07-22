@@ -3915,9 +3915,16 @@ ${glossaryStr}
       if (reWithSuffix.test(text)) {
         return text.replace(reWithSuffix, (match) => {
           const punct = match.slice(matchedText.length);
-          // suffix가 순수 문장부호이고 goodWord가 이미 그 부호로 끝나면 중복 방지
-          const trailSuffix = /^[.!?]+$/.test(suffix) && /[.!?]$/.test(goodWord) ? '' : suffix;
-          return goodWord + trailSuffix + punct;
+          // 원래 문장부호 보존: suffix가 !/?면 goodWord의 마침표를 suffix로 교체
+          let finalWord = goodWord;
+          if (/^[!?]+$/.test(suffix) && /\.$/.test(goodWord)) {
+            finalWord = goodWord.slice(0, -1) + suffix;
+          } else if (/^[.!?]+$/.test(suffix) && /[.!?]$/.test(goodWord)) {
+            // goodWord 끝에 이미 같은 류 문장부호 → 중복 방지
+          } else {
+            finalWord = goodWord + suffix;
+          }
+          return finalWord + punct;
         });
       }
     }
