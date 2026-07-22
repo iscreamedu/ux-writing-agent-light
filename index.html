@@ -3861,18 +3861,26 @@ ${glossaryStr}
       const alts = goodWord.split('/');
       const withBatchim = alts[0].trim();
       const withoutBatchim = alts[1]?.trim() || alts[0].trim();
-      const re0 = new RegExp(esc + '[.!?。]?', 'i');
-      return text.replace(re0, (match, offset) => {
-        // 비한글 문자(공백·괄호 등)를 건너뛰고 가장 가까운 한글 음절을 역방향 탐색
+      const pickAlt = (offset) => {
         let prevKorean = '';
         for (let k = offset - 1; k >= 0; k--) {
           const c = text.codePointAt(k) || 0;
           if (c >= 0xAC00 && c <= 0xD7A3) { prevKorean = text[k]; break; }
         }
-        // 앞 글자가 없으면 받침 있는 형태(이에요.)를 기본값으로 사용
-        const chosen = (!prevKorean || this._batchim(prevKorean) > 0) ? withBatchim : withoutBatchim;
-        return chosen;
+        return (!prevKorean || this._batchim(prevKorean) > 0) ? withBatchim : withoutBatchim;
+      };
+      // 뒤따르는 조사까지 함께 치환 (예: 학생을 → 자녀를)
+      const particles = ['이라도','이라','으로부터','으로','이랑','이든지','이든','이지만','이고','이나','이며','이면','이야','이란','이라서','이라면','이에요','예요','과','와','를','을','는','은','가','이','로','의','에서','에게','한테서','한테','도','만','마다','조차','부터','까지','라도'];
+      const particleAlt = particles.join('|');
+      const pRe = new RegExp(`(${esc})(${particleAlt})`, 'g');
+      const r0p = text.replace(pRe, (_, _bad, p, offset) => {
+        const chosen = pickAlt(offset);
+        return chosen + this._particleVariant(p, chosen);
       });
+      if (r0p !== text) return r0p;
+      // 조사 없는 경우 단순 치환
+      const re0 = new RegExp(esc + '[.!?。]?', 'i');
+      return text.replace(re0, (match, offset) => pickAlt(offset));
     }
 
     // 1. 명시적 형태소 규칙 적용
@@ -5081,13 +5089,10 @@ ${glossaryStr}
           const _forbidCats = Store.getForbiddenCategories(State.userType);
           const forbiddenBadgeSpans = forbiddenLabels.map(l => {
             const catReason = _forbidCats.find(c => c.category === l)?.reason || '';
-            const tooltip = catReason
-              ? `style="position:relative;cursor:default;" onmouseenter="this.querySelector('.fb-tip').style.display='block'" onmouseleave="this.querySelector('.fb-tip').style.display='none'"`
+            const qIcon = catReason
+              ? `<span style="position:relative;display:inline-flex;align-items:center;cursor:default;" onmouseenter="this.querySelector('.fb-tip').style.display='block'" onmouseleave="this.querySelector('.fb-tip').style.display='none'"><svg style="width:11px;height:11px;flex-shrink:0;color:#f87171;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 17v.01"/><path d="M12 13.5a1.5 1.5 0 0 1 1-1.4 2.5 2.5 0 1 0-3-2.4"/></svg><span class="fb-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;background:#1e293b;color:#f8fafc;font-size:11px;white-space:nowrap;border-radius:6px;padding:4px 10px;z-index:99;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);">${this._esc(catReason)}<span style="position:absolute;top:100%;right:6px;border:5px solid transparent;border-top-color:#1e293b;"></span></span></span>`
               : '';
-            const tipHtml = catReason
-              ? `<span class="fb-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1e293b;color:#f8fafc;font-size:11px;white-space:nowrap;border-radius:6px;padding:4px 10px;z-index:99;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);">${this._esc(catReason)}<span style="position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1e293b;"></span></span>`
-              : '';
-            return `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-600" ${tooltip}><svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${this._esc(l)}${tipHtml}</span>`;
+            return `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-600"><svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${this._esc(l)}${qIcon}</span>`;
           });
           const allBadgesHtml = guideBadgeSpans.length
             ? `<div class="flex flex-wrap gap-1 mt-1.5">${guideBadgeSpans.join('')}</div>` : '';
@@ -5280,7 +5285,7 @@ ${glossaryStr}
                 <span class="${mainTextCls}">${this._esc(main)}</span>
                 ${cnt > 1 ? `<span class="${badgeCls}">${cnt}</span>` : ''}
               </div>
-              ${reason ? `<span class="${reasonCls}" ${catGuideReason ? `style="position:relative;cursor:default;" onmouseenter="this.querySelector('.fb-tip').style.display='block'" onmouseleave="this.querySelector('.fb-tip').style.display='none'"` : ''}>${this._esc(reason)}${catGuideReason ? `<span class="fb-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1e293b;color:#f8fafc;font-size:11px;white-space:nowrap;border-radius:6px;padding:4px 10px;z-index:99;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);">${this._esc(catGuideReason)}<span style="position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1e293b;"></span></span>` : ''}</span>` : ''}
+              ${reason ? `<span class="${reasonCls}">${this._esc(reason)}${catGuideReason ? `<span style="position:relative;display:inline-flex;align-items:center;margin-left:3px;cursor:default;vertical-align:middle;" onmouseenter="this.querySelector('.fb-tip').style.display='block'" onmouseleave="this.querySelector('.fb-tip').style.display='none'"><svg style="width:11px;height:11px;flex-shrink:0;opacity:0.7;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 17v.01"/><path d="M12 13.5a1.5 1.5 0 0 1 1-1.4 2.5 2.5 0 1 0-3-2.4"/></svg><span class="fb-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;background:#1e293b;color:#f8fafc;font-size:11px;white-space:nowrap;border-radius:6px;padding:4px 10px;z-index:99;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);">${this._esc(catGuideReason)}<span style="position:absolute;top:100%;right:6px;border:5px solid transparent;border-top-color:#1e293b;"></span></span></span>` : ''}</span>` : ''}
             </li>`;
           }).join('')
         : '';
