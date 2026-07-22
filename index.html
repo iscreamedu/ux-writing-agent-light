@@ -1381,31 +1381,39 @@ ${numbered}`;
 원문:
 ${numbered}`;
   } else if (userType === 'parent') {
+    // 학부모 가이드 데이터 동적 로드
+    const parentForbidden = Store.getForbiddenCategories('parent');
+    const parentGuidelines = Store.getGuidelines('parent');
+    const forbiddenSection = parentForbidden.map(cat =>
+      `[금지어 - ${cat.category}] (${cat.reason || '사용 금지'})\n금지 단어: ${(cat.words||[]).join(', ')}`
+    ).join('\n');
+    const guideSection = parentGuidelines.map(g => {
+      const terms = (g.terms||[]).filter(t => t.bad && t.good).map(t => `"${t.bad.split(',')[0].trim()}" → "${t.good}"`).join(', ');
+      return terms ? `[${g.rule}] ${terms}` : '';
+    }).filter(Boolean).join('\n');
+
     prompt = `당신은 초등학생 학부모(30~40대) 대상 교육 앱 UX Writing 교정 전문가입니다.
 브랜드: "엄마와 공감하는", 페르소나: 친절한 자녀교육 상담가 (오은영 박사 스타일)
 
-[중요] 아래 문구들은 데이터 기반으로 일부 용어만 기계적으로 치환된 텍스트입니다. 문맥을 보고 실제 UX Writing 원칙에 맞게 추가 개선해야 합니다.
+[홈런 학부모 UX Writing 가이드]
 
-각 문구에 아래 단계를 순서대로 적용하세요.
+■ 금지어 (아래 단어가 있으면 반드시 긍정적/안내 어조로 대치):
+${forbiddenSection}
 
-[단계 1] 다음 단어가 있으면 즉시 변환 (예외 없음):
-- "반드시" → 삭제
-- "절대" → 삭제 또는 "꼭"으로 대체
-- "무조건", "꼭" → 삭제
-- "~하십시오" → "~해주세요"
-- "~했습니다", "~입니다" → "~했어요", "~이에요"
-- "실패하였어요", "실패했어요" → 문장 전체를 "다시 도전해봐요!"로 대체
-- "로그인" → "로그인하기" / "업데이트" → "업데이트하기"
-- "학생" → "아이" 또는 "자녀"
+■ 개선 표현 규칙:
+${guideSection}
 
-[단계 2] 남은 부정·낙담 표현 → 긍정·격려 표현으로
-[단계 3] 대화체(~해요, ~이에요, ~하고 있어요)로 통일
-[단계 4] 중복·불필요한 표현 제거, 간결하게
+[적용 단계]
+1. 위 금지어가 포함된 경우 해당 카테고리 가이드에 맞게 어조 변경
+2. 개선 표현 규칙에 맞게 용어·문체 치환
+3. 대화체(~해요, ~이에요, ~하고 있어요)로 통일
+4. 부정·명령·지적형 표현 → 긍정·격려·안내형으로
+5. 중복·불필요한 표현 제거, 간결하게
 
-규칙: 원문과 동일한 결과를 절대 반환하지 말 것. 반드시 위 단계를 적용한 새 문구를 반환할 것.
+규칙:
+- 원문과 동일한 결과를 절대 반환하지 말 것
 - 문장 수 유지: 입력 N개 → 출력 N개
-- 조사 유지
-- 문장 간 맥락 일관성
+- 조사 유지, 문장 간 맥락 일관성
 
 아래 JSON 형식으로만 응답하세요 (설명 없이):
 {"results": ["교정된 문구1", "교정된 문구2", ...]}
@@ -5099,10 +5107,11 @@ ${glossaryStr}
           const _forbidCats = Store.getForbiddenCategories(State.userType);
           const forbiddenBadgeSpans = forbiddenLabels.map(l => {
             const catReason = _forbidCats.find(c => c.category === l)?.reason || '';
-            const qIcon = catReason
-              ? `<span style="position:relative;display:inline-flex;align-items:center;cursor:default;" onmouseenter="this.querySelector('.fb-tip').style.display='block'" onmouseleave="this.querySelector('.fb-tip').style.display='none'"><svg style="width:11px;height:11px;flex-shrink:0;color:#f87171;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 17v.01"/><path d="M12 13.5a1.5 1.5 0 0 1 1-1.4 2.5 2.5 0 1 0-3-2.4"/></svg><span class="fb-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;background:#1e293b;color:#f8fafc;font-size:11px;white-space:nowrap;border-radius:6px;padding:4px 10px;z-index:99;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);">${this._esc(catReason)}<span style="position:absolute;top:100%;right:6px;border:5px solid transparent;border-top-color:#1e293b;"></span></span></span>`
+            const tipHtml = catReason
+              ? `<span class="fb-tip" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#1e293b;color:#f8fafc;font-size:11px;white-space:nowrap;border-radius:6px;padding:4px 10px;z-index:99;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);">${this._esc(catReason)}<span style="position:absolute;bottom:100%;left:8px;border:5px solid transparent;border-bottom-color:#1e293b;"></span></span>`
               : '';
-            return `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-600"><svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${this._esc(l)}${qIcon}</span>`;
+            const hoverAttrs = catReason ? `onmouseenter="this.querySelector('.fb-tip').style.display='block'" onmouseleave="this.querySelector('.fb-tip').style.display='none'"` : '';
+            return `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-600" style="position:relative;${catReason?'cursor:default;':''}" ${hoverAttrs}><svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${this._esc(l)}${catReason ? `<svg style="width:11px;height:11px;flex-shrink:0;opacity:0.6;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>` : ''}${tipHtml}</span>`;
           });
           const allBadgesHtml = guideBadgeSpans.length
             ? `<div class="flex flex-wrap gap-1 mt-1.5">${guideBadgeSpans.join('')}</div>` : '';
@@ -5295,7 +5304,7 @@ ${glossaryStr}
                 <span class="${mainTextCls}">${this._esc(main)}</span>
                 ${cnt > 1 ? `<span class="${badgeCls}">${cnt}</span>` : ''}
               </div>
-              ${reason ? `<span class="${reasonCls}">${this._esc(reason)}${catGuideReason ? `<span style="position:relative;display:inline-flex;align-items:center;margin-left:3px;cursor:default;vertical-align:middle;" onmouseenter="this.querySelector('.fb-tip').style.display='block'" onmouseleave="this.querySelector('.fb-tip').style.display='none'"><svg style="width:11px;height:11px;flex-shrink:0;opacity:0.7;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 17v.01"/><path d="M12 13.5a1.5 1.5 0 0 1 1-1.4 2.5 2.5 0 1 0-3-2.4"/></svg><span class="fb-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;background:#1e293b;color:#f8fafc;font-size:11px;white-space:nowrap;border-radius:6px;padding:4px 10px;z-index:99;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);">${this._esc(catGuideReason)}<span style="position:absolute;top:100%;right:6px;border:5px solid transparent;border-top-color:#1e293b;"></span></span></span>` : ''}</span>` : ''}
+              ${reason ? `<span class="${reasonCls}" style="position:relative;${catGuideReason?'cursor:default;':''}" ${catGuideReason?`onmouseenter="this.querySelector('.fb-tip').style.display='block'" onmouseleave="this.querySelector('.fb-tip').style.display='none'"`:''}>${this._esc(reason)}${catGuideReason ? `<svg style="width:11px;height:11px;flex-shrink:0;opacity:0.6;margin-left:3px;vertical-align:middle;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg><span class="fb-tip" style="display:none;position:absolute;top:calc(100% + 6px);left:0;background:#1e293b;color:#f8fafc;font-size:11px;white-space:nowrap;border-radius:6px;padding:4px 10px;z-index:99;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);">${this._esc(catGuideReason)}<span style="position:absolute;bottom:100%;left:8px;border:5px solid transparent;border-bottom-color:#1e293b;"></span></span>` : ''}</span>` : ''}
             </li>`;
           }).join('')
         : '';
