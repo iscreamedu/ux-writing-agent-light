@@ -4020,9 +4020,11 @@ ${glossaryStr}
       if (reWithSuffix.test(text)) {
         return text.replace(reWithSuffix, (match) => {
           const punct = match.slice(matchedText.length);
-          // suffix가 순수 문장부호이고 goodWord가 이미 그 부호로 끝나면 중복 방지
-          const trailSuffix = /^[.!?]+$/.test(suffix) && /[.!?]$/.test(goodWord) ? '' : suffix;
-          return goodWord + trailSuffix + punct;
+          // suffix가 순수 문장부호이고 goodWord도 부호로 끝나면 goodWord의 부호를 suffix로 대체
+          if (/^[.!?]+$/.test(suffix) && /[.!?]$/.test(goodWord)) {
+            return goodWord.replace(/[.!?]+$/, '') + suffix + punct;
+          }
+          return goodWord + suffix + punct;
         });
       }
     }
