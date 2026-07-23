@@ -2659,7 +2659,8 @@ const App = {
   _autoKoreanSpacing(text) {
     let t = text;
     // 목적격(을/를) + 한글 → 공백: "보상을받" → "보상을 받"
-    t = t.replace(/(을|를)([가-힣])/g, '$1 $2');
+    // 단, 동사 어미 앞(을까/을게/을래/을지/을때/을수/을텐/을걸/를까/를게 등)은 제외
+    t = t.replace(/(을|를)(?!까|게|래|지|때|수|텐|걸|수록|지도|지만)([가-힣])/g, '$1 $2');
     // 처소·방향격(에서/에게/한테/부터/까지) + 한글 → 공백
     t = t.replace(/(에서|에게|한테|부터|까지)([가-힣])/g, '$1 $2');
     // 조격(으로/로) + 특정 한글 시작 → 공백 (이/가/는/은/와/과 등 연속 조사 제외)
@@ -4098,13 +4099,13 @@ ${glossaryStr}
   _geminiCacheGet(text) {
     try {
       const store = JSON.parse(localStorage.getItem('_gc') || '{}');
-      return store[text];
+      return store[`${State.userType}:${text}`];
     } catch { return undefined; }
   },
   _geminiCacheSet(text, improved) {
     try {
       const store = JSON.parse(localStorage.getItem('_gc') || '{}');
-      store[text] = improved;
+      store[`${State.userType}:${text}`] = improved;
       // 캐시 최대 200개 유지 (오래된 것부터 제거)
       const keys = Object.keys(store);
       if (keys.length > 200) delete store[keys[0]];
