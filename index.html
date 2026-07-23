@@ -6196,7 +6196,6 @@ ${glossaryStr}
             class="flex-1 text-sm text-slate-700 bg-transparent outline-none"
             onkeydown="if(event.key==='Enter'){this.blur()}if(event.key==='Escape'){this.value=App._getPopupRule(${i});this.blur()}"
             onblur="App._savePopupInline(${i},this.value)" />
-          <button onclick="document.getElementById('popup-input-${i}').focus();document.getElementById('popup-input-${i}').select()" class="flex-shrink-0 text-slate-300 hover:text-indigo-400 p-0.5 rounded transition-colors" title="수정"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></button>
           <button onclick="App.deletePopupGuideItem(${i})" class="flex-shrink-0 text-slate-300 hover:text-red-400 p-0.5 rounded transition-colors" title="삭제">${TRASH}</button>
         </div>`;
       return `<div class="border-b border-slate-100 py-2 last:border-0">
