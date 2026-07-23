@@ -2646,57 +2646,6 @@ const App = {
         }
       });
 
-      // 3단계: Gemini 띄어쓰기 교정 (API 가능 시 추가 품질 향상)
-      const apiKey = _dk();
-      if (!apiKey || apiKey === '__GEMINI_K__') return;
-      const sentences = targets.map(i => i.improved);
-      const origPuncts = targets.map(i => (i.improved.match(/[!?]+$/) || [''])[0]);
-      if (!sentences.length) return;
-      const prompt = `아래 문장 배열의 띄어쓰기 오류만 교정해서 배열로 반환하세요.
-- 맞춤법, 표현, 문장 부호(!, ?, . 등)는 절대 바꾸지 마세요
-- 원문 문법이 이상한 경우 억지로 공백 추가 금지 ("~해 하-" 형태 금지)
-- 오류 없으면 원문 그대로 출력
-
-교정할 문장 배열: ${JSON.stringify(sentences)}
-
-반드시 JSON만 응답: {"fixed":["교정된문장1","교정된문장2",...]}`;
-
-      const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
-      let raw = null;
-      for (const model of models) {
-        try {
-          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0, maxOutputTokens: 2048, responseMimeType: 'application/json' }
-            })
-          });
-          if (resp.status === 429) { await new Promise(r => setTimeout(r, 2000)); continue; }
-          if (!resp.ok) continue;
-          const data = await resp.json();
-          raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (raw) break;
-        } catch { continue; }
-      }
-      if (!raw) return; // Gemini 실패해도 규칙 기반 결과는 이미 적용됨
-
-      const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
-      const fixed = (parsed.fixed || []).map(r => String(r).replace(/^\d+\.\s*/, '').trim());
-      targets.forEach((item, idx) => {
-        let f = fixed[idx];
-        if (!f) return;
-        if (origPuncts[idx]) f = f.replace(/[.!?]*$/, '') + origPuncts[idx];
-        if (f !== item.improved) {
-          item.improved = f;
-          const dup = item.issues.some(i => i.type === 'spelling' && i.subtype === 'spacing');
-          if (!dup) {
-            item.issues.push({ type: 'spelling', severity: 'error', description: `${item.original} → ${f}`, suggestion: f, subtype: 'spacing' });
-            item.hasIssues = true;
-          }
-        }
-      });
     } catch { /* 실패 시 무시 */ }
   },
 
