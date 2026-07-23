@@ -1120,8 +1120,8 @@ const EMBEDDED_HISTORY = [];
 /* __HISTORY_END__ */
 
 // 런타임 in-memory 데이터
-// - 새 배포가 올라오면(EMBEDDED_DATA 변경) 항상 EMBEDDED_DATA 우선
 // - 배포가 동일하면 관리자가 편집한 localStorage 데이터 유지
+// - 새 배포가 올라오면 EMBEDDED_DATA를 기반으로 하되, 사용자 커스텀 데이터는 보존
 const _embeddedStr = JSON.stringify(EMBEDDED_DATA);
 const _baseStr = localStorage.getItem('ux_guide_data_base');
 const _savedStr = localStorage.getItem('ux_guide_data');
@@ -1131,9 +1131,22 @@ if (_savedStr && _baseStr === _embeddedStr) {
   try { _mem = JSON.parse(_savedStr); } catch { _mem = null; }
 }
 if (!_mem) {
-  // 새 배포이거나 저장 데이터 없음 → EMBEDDED_DATA 사용
+  // 새 배포 → EMBEDDED_DATA 기반으로 초기화
   _mem = JSON.parse(_embeddedStr);
   try { localStorage.setItem('ux_guide_data_base', _embeddedStr); } catch {}
+  // 단, 이전 저장 데이터가 있으면 사용자 커스텀 항목을 보존
+  if (_savedStr) {
+    try {
+      const saved = JSON.parse(_savedStr);
+      ['little', 'elementary', 'parent'].forEach(t => {
+        if (!saved[t] || !_mem[t]) return;
+        if (saved[t].guidelines?.length)  _mem[t].guidelines  = saved[t].guidelines;
+        if (saved[t].popupGuide?.length)   _mem[t].popupGuide  = saved[t].popupGuide;
+        if (saved[t].forbidden?.length)    _mem[t].forbidden   = saved[t].forbidden;
+        if (saved[t].glossary?.length)     _mem[t].glossary    = saved[t].glossary;
+      });
+    } catch {}
+  }
 }
 
 // ────────────────────────────────────────
