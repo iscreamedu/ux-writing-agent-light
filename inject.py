@@ -1,13 +1,11 @@
-import os, json, re, base64
+import os, json, re
 
 gemini_k = os.environ['GEMINI_K']
-_S = 42
-encoded_k = base64.b64encode(bytes([ord(ch) ^ (_S + i % 7) for i, ch in enumerate(gemini_k)])).decode()
 
 with open('dist/index.html', 'r', encoding='utf-8') as f:
     c = f.read()
 
-c = c.replace('__GEMINI_K__', encoded_k)
+c = c.replace('__GEMINI_K__', gemini_k)
 
 with open('guide-data.json', 'r', encoding='utf-8') as f:
     guide = f.read()

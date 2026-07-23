@@ -1320,12 +1320,8 @@ const State = {
 // ────────────────────────────────────────
 // Gemini 직접 호출 (서버 불필요)
 // ────────────────────────────────────────
-const _S = 42;
 const _K = "__GEMINI_K__";
-function _dk() {
-  const b = atob(_K);
-  return Array.from(b).map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ (_S + i % 7))).join('');
-}
+function _dk() { return _K; }
 async function _callGeminiAPI(texts, userType, charMode) {
   const apiKey = _dk();
   const numbered = texts.map((t, i) => `${i + 1}. ${t}`).join('\n');
