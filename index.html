@@ -4245,9 +4245,10 @@ ${glossaryStr}
     const charMode = State.userType === 'character';
     // 캐시 초기화 후 강제 재호출
     try { localStorage.removeItem('_gc'); } catch {}
+    result._geminiFailed = false;
     await this._motivateAll(result, false, charMode);
     this._renderResults(result);   // 버튼 상태 초기화 포함
-    this._renderGeminiRewrite(result); // Gemini 결과로 오른쪽 박스 교체 + 버튼 숨김
+    if (!result._geminiFailed) this._renderGeminiRewrite(result);
   },
 
   async _runGeminiDirect() {
@@ -4317,8 +4318,10 @@ ${glossaryStr}
           geminiResultMap.set(text, improved);
         });
       } catch (e) {
-        if (e.message?.includes('429')) this.showToast('Gemini 문구 개선을 사용하려면 60초 후 다시 검사해주세요.', 'warn');
+        if (e.message?.includes('429')) this.showToast('Gemini 사용량이 초과됐어요. 잠시 후 다시 시도해주세요.', 'warn');
         else console.warn('[gemini] 배치 실패:', e.message);
+        result._geminiFailed = true;
+        return; // 실패 시 geminiFullText 설정하지 않음
       }
     }
 
