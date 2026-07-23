@@ -2628,7 +2628,8 @@ const App = {
     if (this._nounDict) return this._nounDict;
     const nouns = new Set([
       // 교육/학습 도메인 명사
-      '학생','학부모','교사','선생','학교','수업','진도','성적','점수','결과',
+      '학생','학부모','교사','선생','학교','수업','진도','성적','점수','결과','단계',
+      '과목','단원','차시','강의','강좌','교과','교재','문항','시험','퀴즈',
       '평가','학습','목표','내용','활동','현황','출석','오답','문제','풀이',
       '보상','포인트','획득','지급','체크','확인','완료','시작','종료','중단',
       '등록','삭제','수정','입력','저장','제출','취소','선택','이동','변경',
@@ -2657,13 +2658,19 @@ const App = {
   // 붙어있는 한글 토큰을 명사 사전으로 2분할 시도
   _splitCompoundNouns(text) {
     const nouns = this._buildNounDict();
-    // 공백 없이 4글자 이상 한글 덩어리만 대상 (짧은 건 단일 형태소일 가능성 높음)
+    const particles = ['을','를','이','가','은','는','의','에','도','만','로','으로','와','과','까지','부터','에서','한테','이에요','예요','입니다','이다'];
+    const stripParticle = w => {
+      for (const p of particles.sort((a,b) => b.length - a.length)) {
+        if (w.endsWith(p) && w.length > p.length) return w.slice(0, -p.length);
+      }
+      return w;
+    };
     return text.replace(/[가-힣]{4,}/g, token => {
-      // 앞 2글자 이상, 뒤 2글자 이상인 모든 분할 시도
       for (let i = 2; i <= token.length - 2; i++) {
         const left = token.slice(0, i);
         const right = token.slice(i);
-        if (nouns.has(left) && nouns.has(right)) {
+        const rightCore = stripParticle(right);
+        if (nouns.has(left) && (nouns.has(right) || nouns.has(rightCore))) {
           return left + ' ' + right;
         }
       }
