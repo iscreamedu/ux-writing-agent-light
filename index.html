@@ -3316,7 +3316,7 @@ ${glossaryStr}
           if (idx === -1 || issues.some(i => i.description.includes(w))) return;
           // 뒤에 조사·어미가 아닌 한글이 바로 붙으면 복합어이므로 스킵
           const afterChar = trimmedLower[idx + wLower.length];
-          const KO_PARTICLES = /^[로으로에서에게한테부터까지도만이가을를은는와과하해했할함합]/;
+          const KO_PARTICLES = /^[로으로에서에게한테부터까지도만이가을를은는와과하해했할함합되된됩됩됐]/;
           if (afterChar && /[가-힣]/.test(afterChar) && !KO_PARTICLES.test(afterChar)) return;
           const label = cat.category || '금지어';
           issues.push({ type:'forbidden', severity:'error', description:`"${w}" 사용 금지 (${label})`, suggestion: '', reason: cat.reason || '' });
