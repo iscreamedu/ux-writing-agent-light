@@ -2595,13 +2595,19 @@ const App = {
   // 개선안 띄어쓰기 규칙 교정 (SPELL_DATA 기반 + 조사 규칙)
   _fixSpacingWithData(text) {
     let result = text;
-    // 1) SPELL_DATA 패턴 교정
+    // 1) SPELL_DATA standard 패턴 교정 (띄어쓰기만 다른 항목)
     (SPELL_DATA.standard || []).forEach(entry => {
       if (!entry.wrong || !entry.correct || entry.wrong === entry.correct) return;
       if (entry.note) return;
       const wrongNorm = entry.wrong.replace(/\s+/g, '');
       const correctNorm = entry.correct.replace(/\s+/g, '');
       if (wrongNorm !== correctNorm) return;
+      const esc = entry.wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      result = result.replace(new RegExp(esc, 'g'), entry.correct);
+    });
+    // 2) SPELL_DATA spacing 섹션 — 복합명사 띄어쓰기 규칙
+    (SPELL_DATA.spacing || []).forEach(entry => {
+      if (!entry.wrong || !entry.correct) return;
       const esc = entry.wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       result = result.replace(new RegExp(esc, 'g'), entry.correct);
     });
