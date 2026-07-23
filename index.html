@@ -2640,7 +2640,8 @@ const App = {
       const guidelines = Store.getGuidelines(type);
       (guidelines || []).forEach(g => {
         (g.terms || []).forEach(t => {
-          (t.bad || []).forEach(w => { if (/^[가-힣]{2,}$/.test(w)) nouns.add(w); });
+          const badWords = Array.isArray(t.bad) ? t.bad : (t.bad || '').split(',').map(b => b.trim()).filter(Boolean);
+          badWords.forEach(w => { if (/^[가-힣]{2,}$/.test(w)) nouns.add(w); });
           if (t.good && /^[가-힣]{2,}$/.test(t.good)) nouns.add(t.good);
         });
       });
