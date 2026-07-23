@@ -2571,7 +2571,11 @@ const App = {
   _checkSpellingWithData(text) {
     const issues = [];
     const all = [...(SPELL_DATA.spell || []), ...(SPELL_DATA.standard || [])];
-    const subtype = (entry, idx) => idx < (SPELL_DATA.spell || []).length ? 'spell' : 'standard';
+    const subtype = (entry, idx) => {
+      const isSpacingOnly = entry.wrong.replace(/\s+/g, '') === entry.correct.replace(/\s+/g, '');
+      if (isSpacingOnly) return 'spacing';
+      return idx < (SPELL_DATA.spell || []).length ? 'spell' : 'standard';
+    };
     all.forEach((entry, idx) => {
       if (!entry.wrong || !entry.correct || entry.wrong === entry.correct) return;
       if (entry.note) return; // note가 있는 항목은 판단 어렵거나 이미 올바른 형태 — 스킵
