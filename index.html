@@ -6110,9 +6110,15 @@ ${glossaryStr}
     const em = this._editMode;
     const TRASH = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>`;
     if (!items.length && !em) { container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">등록된 가이드가 없습니다.</p>'; return; }
+    const MOVE_UP = `<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>`;
+    const MOVE_DN = `<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>`;
     const rows = items.map((item, i) => {
       if (em) return `
         <div id="popup-row-${i}" class="group flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 mb-2 bg-white hover:border-indigo-300 transition-colors">
+          <div class="flex flex-col gap-0.5 flex-shrink-0">
+            <button onclick="App._movePopupRule(${i},-1)" ${i===0?'disabled':''} class="text-slate-300 hover:text-slate-600 disabled:opacity-20 disabled:cursor-not-allowed p-0.5 rounded transition-colors">${MOVE_UP}</button>
+            <button onclick="App._movePopupRule(${i},1)" ${i===items.length-1?'disabled':''} class="text-slate-300 hover:text-slate-600 disabled:opacity-20 disabled:cursor-not-allowed p-0.5 rounded transition-colors">${MOVE_DN}</button>
+          </div>
           <input type="text" value="${this._esc(item)}" id="popup-input-${i}"
             class="flex-1 text-sm text-slate-700 bg-transparent outline-none"
             onkeydown="if(event.key==='Enter'){this.blur()}if(event.key==='Escape'){this.value=App._getPopupRule(${i});this.blur()}"
@@ -6135,6 +6141,14 @@ ${glossaryStr}
     container.innerHTML = `<div>${rows}</div>${addRow}`;
   },
   _getPopupRule(i) { return (Store.getPopupGuide(this._adminTab)[i]) || ''; },
+  _movePopupRule(i, dir) {
+    const items = [...Store.getPopupGuide(this._adminTab)];
+    const j = i + dir;
+    if (j < 0 || j >= items.length) return;
+    [items[i], items[j]] = [items[j], items[i]];
+    Store.setPopupGuide(this._adminTab, items);
+    this._renderPopupGuideList();
+  },
   _savePopupInline(i, val) {
     val = val.trim();
     if (!val) { this._renderPopupGuideList(); return; }
