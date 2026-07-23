@@ -1478,7 +1478,7 @@ ${numbered}`;
       throw e;
     }
   }
-  throw new Error('모든 모델 실패');
+  throw new Error('429 모든 모델 사용량 초과');
 }
 
 // ────────────────────────────────────────
@@ -2515,9 +2515,9 @@ const App = {
     }
 
     // Kiwi 형태소 분석으로 직접 매칭 실패한 구문 보완 (명사 분리 기반)
-    await this._kiwiMatchMissed(result, State.userType);
+    try { await this._kiwiMatchMissed(result, State.userType); } catch(e) { console.warn('[kiwi] matchMissed 오류:', e.message); }
     // Kiwi 형태소 분석으로 suggestion 보강 (서버 준비된 경우에만)
-    await this._kiwiEnhance(result);
+    try { await this._kiwiEnhance(result); } catch(e) { console.warn('[kiwi] enhance 오류:', e.message); }
 
     // Step 1 완료 대기 후 머지
     const spell = await spellPromise;
@@ -4282,7 +4282,8 @@ ${glossaryStr}
         const cb = document.getElementById('impr-copy-btn'); if (cb) { cb.style.color = ''; cb.style.opacity = ''; cb.classList.add('char-mode'); }
       }
     } catch(e) {
-      this.showToast('오류가 발생했어요.', 'error');
+      if (e.message?.includes('429')) this.showToast('Gemini 사용량이 초과됐어요. 잠시 후 다시 시도해주세요.', 'warn');
+      else this.showToast('Gemini 오류가 발생했어요.', 'error');
     } finally {
       if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 28 28" style="flex-shrink:0"><path d="M14 0C14 7.7 7.7 14 0 14C7.7 14 14 20.3 14 28C14 20.3 20.3 14 28 14C20.3 14 14 7.7 14 0Z" fill="#ffffff"/></svg> Gemini로 검사'; btn.style.opacity = '1'; }
     }
@@ -4463,7 +4464,8 @@ ${glossaryStr}
       if (!g.terms) continue;
       for (const t of g.terms) {
         if (!t.bad || !t.good || t._section !== undefined) continue;
-        for (const bad of t.bad.split(',').map(b => b.trim()).filter(Boolean)) {
+        const badList = Array.isArray(t.bad) ? t.bad : t.bad.split(',').map(b => b.trim()).filter(Boolean);
+        for (const bad of badList) {
           const badCore = bad.replace(/[.!?。]+$/, '');
           if (badCore.length < 2) continue;
           candidates.push({ badCore, bad, good: t.good, rule: g.rule || '', reason: g.reason || '' });
