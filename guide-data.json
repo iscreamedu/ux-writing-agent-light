@@ -134,10 +134,6 @@
           {
             "bad": "예",
             "good": "네"
-          },
-          {
-            "bad": "하개ㅔㅅ",
-            "good": "ㅇㄹㄴㅇㄹ"
           }
         ],
         "target": "popup_title"
