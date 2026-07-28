@@ -2973,6 +2973,17 @@ const App = {
       addIssue(m[1] + '수없', m[1] + ' 수 없', `'수 없다'는 띄어 써야 해요.`);
     });
 
+    // 조사 분리 오류: 앞말과 조사 사이 불필요한 공백 (처음 부터→처음부터, 학습 까지→학습까지)
+    const ATTACH_PARTICLES = ['까지','부터','에서','에게','한테','보다','처럼','만큼','마다','조차','밖에','뿐'];
+    scanRegex(new RegExp(`([가-힣]) (${ATTACH_PARTICLES.join('|')})`, 'g'), m => {
+      let wordStart = m.index;
+      while (wordStart > 0 && !/\s/.test(text[wordStart - 1])) wordStart--;
+      const fullToken = text.slice(wordStart, m.index + m[0].length);
+      const suggestion = fullToken.replace(' ' + m[2], m[2]);
+      if (suggestion === fullToken) return;
+      addIssue(fullToken, suggestion, '', 'spacing');
+    });
+
     // 조사 + 있다/없다 붙여쓰기: 계획이있나요 → 계획이 있나요
     scanRegex(/([이가을를은는도만에서와과])(있|없)/g, m => {
       const before = text.slice(0, m.index);
