@@ -608,6 +608,7 @@ textarea:focus, input:focus, select:focus {
               </div>
               <span id="guide-search-count" class="hidden text-xs text-slate-400"></span>
             </div>
+            <div id="guide-add-row"></div>
             <div id="guide-list"></div>
           </div>
 
@@ -6818,7 +6819,9 @@ ${glossaryStr}
           oninput="document.getElementById('guide-add-btn').disabled=!this.value.trim()" />
         <button id="guide-add-btn" disabled onclick="App._addGuideInline(document.getElementById('guide-add-input'))" class="text-sm px-3 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition flex-shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none">+ 분류 추가</button>
       </div>` : '';
-    container.innerHTML = rows + addRow;
+    container.innerHTML = rows;
+    const addRowEl = document.getElementById('guide-add-row');
+    if (addRowEl) addRowEl.innerHTML = addRow;
     // re-apply search filter if active
     const searchVal = (document.getElementById('guide-search-input') || {}).value;
     if (searchVal) requestAnimationFrame(() => this._guideSearch(searchVal));
