@@ -193,6 +193,7 @@ textarea:focus, input:focus, select:focus {
 
     /* ── 드래그 오버 ─────────────────────────────────── */
     .drag-over { border-color:#256ef4 !important; background:#eef3fe !important; }
+    #gemini-all-wrap:hover #gemini-all-tip { opacity:1 !important; }
   </style>
 </head>
 <body class="bg-white min-h-screen text-slate-800">
@@ -412,12 +413,15 @@ textarea:focus, input:focus, select:focus {
         <!-- 하단: Gemini 버튼 -->
         <div id="gemini-footer" class="px-4 py-3 flex-shrink-0 flex items-center justify-between">
           <div></div>
-          <button id="gemini-all-btn" onclick="App._runGeminiAll()"
-            class="hidden flex items-center gap-2 text-sm font-semibold px-5 py-2 rounded-full transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-            style="background:linear-gradient(135deg,#4285f4 0%,#7c6ef4 60%,#9c6ef4 100%);color:#fff;">
-            <svg width="14" height="14" viewBox="0 0 28 28" style="flex-shrink:0"><path d="M14 0C14 7.7 7.7 14 0 14C7.7 14 14 20.3 14 28C14 20.3 20.3 14 28 14C20.3 14 14 7.7 14 0Z" fill="#ffffff"/></svg>
-            Gemini로 개선
-          </button>
+          <div style="position:relative;display:inline-block;" id="gemini-all-wrap" class="hidden">
+            <button id="gemini-all-btn" onclick="App._runGeminiAll()"
+              class="flex items-center gap-2 text-sm font-semibold px-5 py-2 rounded-full transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              style="background:linear-gradient(135deg,#4285f4 0%,#7c6ef4 60%,#9c6ef4 100%);color:#fff;">
+              <svg width="14" height="14" viewBox="0 0 28 28" style="flex-shrink:0"><path d="M14 0C14 7.7 7.7 14 0 14C7.7 14 14 20.3 14 28C14 20.3 20.3 14 28 14C20.3 14 14 7.7 14 0Z" fill="#ffffff"/></svg>
+              Gemini로 개선
+            </button>
+            <div style="position:absolute;bottom:calc(100% + 6px);right:0;background:#1e293b;color:#fff;font-size:11px;white-space:nowrap;padding:5px 9px;border-radius:6px;pointer-events:none;opacity:0;transition:opacity 0.15s;" id="gemini-all-tip">API 비용이 발생합니다. 무분별한 사용은 지양해주세요.</div>
+          </div>
         </div>
       </div>
 
@@ -1671,7 +1675,7 @@ const App = {
     if (fullImprEl)    fullImprEl.textContent = '';
     if (guideSection)  guideSection.classList.add('hidden');
     document.getElementById('impr-copy-wrap')?.classList.add('hidden');
-    const geminiAllBtn0 = document.getElementById('gemini-all-btn');
+    const geminiAllBtn0 = document.getElementById('gemini-all-wrap');
     if (geminiAllBtn0) geminiAllBtn0.classList.add('hidden');
     if (geminiBlock)   geminiBlock.classList.add('hidden');
   },
@@ -2921,13 +2925,33 @@ const App = {
     const UI_LOANWORDS = '데이터|서비스|시스템|콘텐츠|컨텐츠|페이지|버튼|메뉴|모드|파일|탭|링크|아이콘|대시보드|프로필|리스트|카드|팝업|모달|배너|슬라이더|타이머|포인트|레벨|스테이지|미션|챌린지|앱|플랫폼|솔루션|엔진|센터|스쿨|클래스|코스|캠프|랩|스튜디오';
     // 붙여쓰는 게 맞는 합성어 예외 (홈페이지, 로그인 등)
     const LOANWORD_EXCEPTIONS = new Set(['홈페이지','로그인','스마트폰','앱스토어','유튜브','카카오톡','인스타그램']);
+    const _lwFixWord = w => {
+      // 부사 띄어쓰기 (오늘학습→오늘 학습)
+      const advList = ['이미','아직','매우','너무','정말','진짜','모두','항상','바로','빨리','자주','먼저','함께','같이','계속','더욱','꼭','꽤','곧','늘','다시','또한','매일','별로','보통','서로','아마','역시','이제','전혀','조금','주로','직접','처음','특히','혼자','충분히','절대','반드시','항상','언제나','가끔','잠깐','잠시','열심히','빨리','천천히','갑자기','이번','저번','다음','이전','최근','현재','매번','지난','올해','작년','내년','매년','오늘','내일','어제','방금','지금','앞으로','이후','이상'];
+      let r = w.replace(new RegExp(`(${advList.join('|')})([가-힣])`, 'g'), '$1 $2');
+      // 외래어 띄어쓰기
+      r = r.replace(new RegExp(`([가-힣])(${UI_LOANWORDS})`, 'g'), (_, p, lw) => {
+        if (LOANWORD_EXCEPTIONS.has(p + lw)) return p + lw;
+        return p + ' ' + lw;
+      });
+      return r;
+    };
+    console.log('[LW-TEXT]', JSON.stringify(text.slice(0,30)));
     scanRegex(new RegExp(`([가-힣])(${UI_LOANWORDS})`, 'g'), m => {
-      const compound = m[1] + m[2];
-      if (LOANWORD_EXCEPTIONS.has(compound)) return;
+      console.log('[LW-MATCH]', m[0], 'idx:', m.index);
       // 앞에 공백이 있으면 이미 띄어쓴 것
       const before = text.slice(0, m.index);
       if (before.endsWith(' ')) return;
-      addIssue(compound, m[1] + ' ' + m[2], `'${m[2]}' 앞 띄어쓰기`, 'spacing');
+      // 전체 단어(공백으로 구분)를 구해 토큰/제안어로 사용
+      let wordStart = m.index;
+      while (wordStart > 0 && !/\s/.test(text[wordStart - 1])) wordStart--;
+      let wordEnd = m.index + m[0].length;
+      while (wordEnd < text.length && !/\s/.test(text[wordEnd])) wordEnd++;
+      const fullWord = text.slice(wordStart, wordEnd);
+      const fixedWord = _lwFixWord(fullWord);
+      console.log('[LW] fullWord:', fullWord, '→', fixedWord);
+      if (fixedWord === fullWord) return;
+      addIssue(fullWord, fixedWord, '', 'spacing');
     });
 
     // ── 띄어쓰기: 의존명사 앞 띄기 ──────────────────────────────────────────
@@ -3111,6 +3135,23 @@ const App = {
     scanRegex(/([가-힣])([아어])있/g, m => {
       addIssue(m[0], m[1] + m[2] + ' 있', undefined, 'spacing');
     });
+
+    // 띄어쓰기 이슈 토큰을 전체 단어로 확장 (예: "습모드" → "오늘학습모드")
+    for (let i = 0; i < issues.length; i++) {
+      const sp = issues[i];
+      if (sp.subtype !== 'spacing') continue;
+      const idx = text.indexOf(sp.token);
+      if (idx < 0) continue;
+      let ws = idx;
+      while (ws > 0 && !/\s/.test(text[ws - 1])) ws--;
+      let we = idx + sp.token.length;
+      while (we < text.length && !/\s/.test(text[we])) we++;
+      const fullW = text.slice(ws, we);
+      if (fullW === sp.token) continue;
+      const fixedW = _lwFixWord(fullW);
+      if (fixedW === fullW || fixedW === sp.token) continue;
+      issues[i] = { token: fullW, suggestion: fixedW, description: fullW + ' → ' + fixedW, subtype: 'spacing' };
+    }
 
     return { status: 'ok', issues };
   },
@@ -3596,9 +3637,11 @@ ${glossaryStr}
     // Gemini 버튼: 이슈가 있을 때만 표시
     const geminiFooter2 = document.getElementById('gemini-footer');
     const geminiBtn2    = document.getElementById('gemini-all-btn');
+    const geminiWrap2   = document.getElementById('gemini-all-wrap');
     const hasIssues = result.items.some(i => i.hasIssues);
     const showGemini = State.inputTab === 'text';
-    if (geminiBtn2)  { geminiBtn2.classList.toggle('hidden', !showGemini); geminiBtn2.disabled = false; geminiBtn2.innerHTML = '<svg width="14" height="14" viewBox="0 0 28 28" style="flex-shrink:0"><path d="M14 0C14 7.7 7.7 14 0 14C7.7 14 14 20.3 14 28C14 20.3 20.3 14 28 14C20.3 14 14 7.7 14 0Z" fill="#ffffff"/></svg> Gemini로 개선'; geminiBtn2.style.opacity = '1'; }
+    if (geminiWrap2) { geminiWrap2.classList.toggle('hidden', !showGemini); }
+    if (geminiBtn2)  { geminiBtn2.disabled = false; geminiBtn2.innerHTML = '<svg width="14" height="14" viewBox="0 0 28 28" style="flex-shrink:0"><path d="M14 0C14 7.7 7.7 14 0 14C7.7 14 14 20.3 14 28C14 20.3 20.3 14 28 14C20.3 14 14 7.7 14 0Z" fill="#ffffff"/></svg> Gemini로 개선'; geminiBtn2.style.opacity = '1'; }
     if (geminiFooter2) { geminiFooter2.classList.toggle('hidden', !showGemini); if (showGemini) geminiFooter2.style.background = '#fff'; }
   },
 
@@ -4846,6 +4889,8 @@ ${glossaryStr}
     });
     // spellPrefixMap: wCore → { style, stemLen } — 교정 제안어가 단어의 접두사인 경우
     const spellPrefixMap = new Map();
+    // spellSuffixMap: wCore → { style, suffixLen } — 교정 제안어가 단어의 접미사인 경우 (예: 조사 교정 "드를" → 개선 단어 "모드를")
+    const spellSuffixMap = new Map();
     (issues || []).filter(i => i.type === 'spelling').forEach(i => {
       const suggStr = i.suggestion || '';
       const style = _spellStyle(i);
@@ -4857,6 +4902,9 @@ ${glossaryStr}
           const iwCore = iw.replace(/[.!?,。]+$/, '');
           if (iwCore.startsWith(swCore) && iwCore.length > swCore.length) {
             if (!spellPrefixMap.has(iwCore)) spellPrefixMap.set(iwCore, { style, stemLen: swCore.length });
+          }
+          if (iwCore.endsWith(swCore) && iwCore.length > swCore.length) {
+            if (!spellSuffixMap.has(iwCore)) spellSuffixMap.set(iwCore, { style, suffixLen: swCore.length });
           }
         });
       });
@@ -4934,11 +4982,25 @@ ${glossaryStr}
       if (prefixMatch) {
         const stemPart   = w.slice(0, prefixMatch.stemLen);
         const suffixPart = w.slice(prefixMatch.stemLen);
+        // prefixMatch와 suffixMatch가 겹치는 경우: 나머지 부분을 suffixMatch 색상으로
+        const suffixMatchEarly = spellSuffixMap.get(wCore);
+        if (suffixPart && suffixMatchEarly) {
+          return `<span style="${prefixMatch.style}${MS}">${this._esc(stemPart)}</span>` +
+                 `<span style="${suffixMatchEarly.style}${MS}">${this._esc(suffixPart)}</span>`;
+        }
         if (suffixPart && isUXChanged) {
           return `<span style="${prefixMatch.style}${MS}">${this._esc(stemPart)}</span>` +
                  `<span style="${uxMarkStyle}">${this._esc(suffixPart)}</span>`;
         }
         return `<span style="${prefixMatch.style}${MS}">${this._esc(stemPart)}</span>${this._esc(suffixPart)}`;
+      }
+
+      // 교정 제안어가 단어 접미사인 경우: 접미 부분만 색상 (예: 조사 교정 "드를" ⊂ "모드를")
+      const suffixMatch = spellSuffixMap.get(wCore);
+      if (suffixMatch) {
+        const prefixPart = w.slice(0, w.length - suffixMatch.suffixLen);
+        const sfxPart    = w.slice(w.length - suffixMatch.suffixLen);
+        return `${this._esc(prefixPart)}<span style="${suffixMatch.style}${MS}">${this._esc(sfxPart)}</span>`;
       }
 
       if (isUXChanged) {
