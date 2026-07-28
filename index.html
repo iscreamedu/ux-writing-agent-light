@@ -2771,12 +2771,6 @@ const App = {
         if (!item.improved) return;
         const fixed = this._applyParticleCorrections(item.improved);
         if (fixed !== item.improved) item.improved = fixed;
-        // 조사 이슈: improved에 token이 없으면 이미 다른 교정에 흡수된 것 → 제거
-        item.issues = item.issues.filter(i => {
-          if (!i._isParticle) return true;
-          if (!i.token) return true;
-          return item.improved.includes(i.token);
-        });
       });
 
       // 2단계: 개선안 띄어쓰기 교정 (SPELL_DATA 규칙)
