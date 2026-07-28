@@ -2835,6 +2835,8 @@ const App = {
       ['않이', '아니', "'않이'는 틀린 표현이에요. '아니'로 써야 해요."],
       ['오랫만', '오랜만', "'오랫만'은 틀린 표현이에요. '오랜만'으로 써야 해요."],
       ['금새', '금세', "'금새'는 틀린 표현이에요. '금세'로 써야 해요."],
+      ['컨텐츠', '콘텐츠', "'컨텐츠'는 비표준어예요. '콘텐츠'로 써야 해요."],
+      ['데이타', '데이터', "'데이타'는 비표준어예요. '데이터'로 써야 해요."],
     ];
     for (const [wrong, right, desc] of misc) {
       // 오랫만 — exclude 오랫동안
@@ -3339,20 +3341,6 @@ ${glossaryStr}
         issues.push({ type:'spelling', severity:'error', description:'"아니오" → "아니요" (표준어)', suggestion: fixed, _applyTo: text => text.replace(/아니오/g, '아니요') });
       }
 
-      const _stdChecks = [
-        { re: /되요/g,   to: '돼요',   label: '되요 → 돼요' },
-        { re: /몇일/g,   to: '며칠',   label: '몇일 → 며칠' },
-        { re: /오랫만/g, to: '오랜만', label: '오랫만 → 오랜만' },
-        { re: /금새/g,   to: '금세',   label: '금새 → 금세' },
-        { re: /컨텐츠/g, to: '콘텐츠', label: '컨텐츠 → 콘텐츠' },
-        { re: /데이타/g, to: '데이터', label: '데이타 → 데이터' },
-      ];
-      _stdChecks.forEach(({ re, to, label }) => {
-        if (re.test(trimmed)) {
-          const fixed = trimmed.replace(re, to);
-          issues.push({ type:'spelling', severity:'error', description:`"${label}" (표준어)`, suggestion: fixed, _applyTo: text => text.replace(re, to) });
-        }
-      });
 
       if (/해\s*주시기\s*바랍니다/.test(trimmed)) {
         const fixed = trimmed.replace(/해\s*주시기\s*바랍니다/g, '해 주세요');
