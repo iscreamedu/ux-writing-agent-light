@@ -2613,7 +2613,7 @@ const App = {
         const wrong = pm[1] + check.wrong;
         const correct = pm[1] + check.correct;
         if (!issues.some(i => i.token === wrong)) {
-          issues.push({ token: wrong, suggestion: correct, description: `${check.wrong} → ${check.correct}`, subtype: 'spell' });
+          issues.push({ token: wrong, suggestion: correct, description: `${check.wrong} → ${check.correct}`, subtype: 'spell', _isParticle: true });
         }
       }
     }
@@ -2771,15 +2771,11 @@ const App = {
         if (!item.improved) return;
         const fixed = this._applyParticleCorrections(item.improved);
         if (fixed !== item.improved) item.improved = fixed;
-        // 토큰이 improved에 없는 stale 조사 이슈 제거 (예: 데이타→데이터 후 "타르" 이슈 제거)
+        // 조사 이슈: improved에 token이 없으면 이미 다른 교정에 흡수된 것 → 제거
         item.issues = item.issues.filter(i => {
-          if (i.type !== 'spelling' || i.subtype !== 'spell') return true;
+          if (!i._isParticle) return true;
           if (!i.token) return true;
-          // particle 이슈: token이 개선 결과에도 원문에도 없으면 stale
-          const inOriginal = item.original.includes(i.token);
-          const inImproved = item.improved.includes(i.token);
-          if (!inOriginal && !inImproved) return false;
-          return true;
+          return item.improved.includes(i.token);
         });
       });
 
@@ -2811,7 +2807,7 @@ const App = {
       const key = token + '|' + suggestion;
       if (!seen.has(key)) {
         seen.add(key);
-        const displayDesc = description || (token + ' → ' + suggestion);
+        const displayDesc = token + ' → ' + suggestion;
         issues.push({ token, suggestion, description: displayDesc, subtype: subtype || 'spell' });
       }
     }
