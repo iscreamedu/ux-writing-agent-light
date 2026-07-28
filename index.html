@@ -2575,15 +2575,29 @@ const App = {
       }
     });
 
-    // 조사 오타 검사: 모음 끝 명사 + 르/로 → 를/로 (를 대신 르 입력 오타)
-    const particleRe = /([가-힣])르(?=[^가-힣]|$)/g;
-    let pm;
-    while ((pm = particleRe.exec(text)) !== null) {
-      const code = pm[1].charCodeAt(0) - 0xAC00;
-      const jongseong = code % 28;
-      if (jongseong === 0) { // 모음으로 끝나는 음절
-        const wrong = pm[1] + '르';
-        const correct = pm[1] + '를';
+    // 조사 오타 검사: 받침 유무에 따른 조사 오류 감지
+    // needsVowel: true = 모음 끝 음절에 붙어야 올바른 조사인데 잘못 쓴 경우
+    // needsVowel: false = 자음 끝 음절에 붙어야 올바른 조사인데 잘못 쓴 경우
+    const particleChecks = [
+      { wrong: '르',   correct: '를',   needsVowel: true  }, // 공부르 → 공부를
+      { wrong: '을',   correct: '를',   needsVowel: true  }, // 공부을 → 공부를
+      { wrong: '으로', correct: '로',   needsVowel: true  }, // 공부으로 → 공부로
+      { wrong: '를',   correct: '을',   needsVowel: false }, // 학생를 → 학생을
+      { wrong: '로',   correct: '으로', needsVowel: false, exceptJongseong: [8] }, // 학생로 → 학생으로 (ㄹ받침 제외)
+    ];
+    for (const check of particleChecks) {
+      const esc = check.wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`([가-힣])${esc}(?=[^가-힣]|$)`, 'g');
+      let pm;
+      while ((pm = re.exec(text)) !== null) {
+        const code = pm[1].charCodeAt(0) - 0xAC00;
+        const jongseong = code % 28;
+        const isVowelEnding = jongseong === 0;
+        if (check.needsVowel && !isVowelEnding) continue;
+        if (!check.needsVowel && isVowelEnding) continue;
+        if (check.exceptJongseong?.includes(jongseong)) continue;
+        const wrong = pm[1] + check.wrong;
+        const correct = pm[1] + check.correct;
         if (!issues.some(i => i.token === wrong)) {
           issues.push({ token: wrong, suggestion: correct, description: `${wrong} → ${correct}`, subtype: 'spell' });
         }
