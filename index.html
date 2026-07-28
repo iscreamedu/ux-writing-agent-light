@@ -2801,7 +2801,7 @@ const App = {
       const key = token + '|' + suggestion;
       if (!seen.has(key)) {
         seen.add(key);
-        const displayDesc = token + ' → ' + suggestion;
+        const displayDesc = description || (token + ' → ' + suggestion);
         issues.push({ token, suggestion, description: displayDesc, subtype: subtype || 'spell' });
       }
     }
@@ -2927,7 +2927,7 @@ const App = {
       // 앞에 공백이 있으면 이미 띄어쓴 것
       const before = text.slice(0, m.index);
       if (before.endsWith(' ')) return;
-      addIssue(compound, m[1] + ' ' + m[2], `'${compound}'에서 '${m[2]}' 앞을 띄어 써야 해요.`, 'spacing');
+      addIssue(compound, m[1] + ' ' + m[2], `'${m[2]}' 앞 띄어쓰기`, 'spacing');
     });
 
     // ── 띄어쓰기: 의존명사 앞 띄기 ──────────────────────────────────────────
