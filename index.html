@@ -2974,7 +2974,7 @@ const App = {
     });
 
     // 조사 분리 오류: 앞말과 조사 사이 불필요한 공백 (처음 부터→처음부터, 학습 까지→학습까지)
-    const ATTACH_PARTICLES = ['까지','부터','에서','에게','한테','보다','처럼','만큼','마다','조차','밖에','뿐'];
+    const ATTACH_PARTICLES = ['까지','부터','에서','에게','한테','보다','처럼','만큼','마다','조차','밖에','뿐','대로','씩','쯤'];
     scanRegex(new RegExp(`([가-힣]) (${ATTACH_PARTICLES.join('|')})`, 'g'), m => {
       let wordStart = m.index;
       while (wordStart > 0 && !/\s/.test(text[wordStart - 1])) wordStart--;
