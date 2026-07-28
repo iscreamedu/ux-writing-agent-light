@@ -2599,7 +2599,7 @@ const App = {
         const wrong = pm[1] + check.wrong;
         const correct = pm[1] + check.correct;
         if (!issues.some(i => i.token === wrong)) {
-          issues.push({ token: wrong, suggestion: correct, description: `${wrong} → ${correct}`, subtype: 'spell' });
+          issues.push({ token: wrong, suggestion: correct, description: `${check.wrong} → ${check.correct}`, subtype: 'spell' });
         }
       }
     }
