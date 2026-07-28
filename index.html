@@ -2750,6 +2750,13 @@ const App = {
     ];
     const advRe = new RegExp(`(${adverbs.join('|')})([가-힣])`, 'g');
     t = t.replace(advRe, '$1 $2');
+    // 한글 명사 + UI 외래어 붙여쓰기 자동 분리
+    const UI_LW = '데이터|서비스|시스템|콘텐츠|컨텐츠|페이지|버튼|메뉴|모드|파일|탭|링크|아이콘|대시보드|프로필|리스트|카드|팝업|모달|배너|슬라이더|타이머|포인트|레벨|스테이지|미션|챌린지|앱|플랫폼|솔루션|엔진|센터|스쿨|클래스|코스|캠프|랩|스튜디오';
+    const LW_EXCEPT = new Set(['홈페이지','로그인','스마트폰','앱스토어','유튜브','카카오톡','인스타그램']);
+    t = t.replace(new RegExp(`([가-힣])(${UI_LW})`, 'g'), (m, prev, lw) => {
+      if (LW_EXCEPT.has(prev + lw)) return m;
+      return prev + ' ' + lw;
+    });
     return t;
   },
 
@@ -2907,6 +2914,20 @@ const App = {
         // has jongseong → should be 이에요
         addIssue(m[0], ch + '이에요', `'${m[0]}'는 틀린 표현이에요. '${ch}이에요'로 써야 해요.`);
       }
+    });
+
+    // ── 띄어쓰기: 한글 명사 + UI 외래어 붙여쓰기 감지 ─────────────────────────
+    // 예: 중요데이터 → 중요 데이터, 학습서비스 → 학습 서비스
+    const UI_LOANWORDS = '데이터|서비스|시스템|콘텐츠|컨텐츠|페이지|버튼|메뉴|모드|파일|탭|링크|아이콘|대시보드|프로필|리스트|카드|팝업|모달|배너|슬라이더|타이머|포인트|레벨|스테이지|미션|챌린지|앱|플랫폼|솔루션|엔진|센터|스쿨|클래스|코스|캠프|랩|스튜디오';
+    // 붙여쓰는 게 맞는 합성어 예외 (홈페이지, 로그인 등)
+    const LOANWORD_EXCEPTIONS = new Set(['홈페이지','로그인','스마트폰','앱스토어','유튜브','카카오톡','인스타그램']);
+    scanRegex(new RegExp(`([가-힣])(${UI_LOANWORDS})`, 'g'), m => {
+      const compound = m[1] + m[2];
+      if (LOANWORD_EXCEPTIONS.has(compound)) return;
+      // 앞에 공백이 있으면 이미 띄어쓴 것
+      const before = text.slice(0, m.index);
+      if (before.endsWith(' ')) return;
+      addIssue(compound, m[1] + ' ' + m[2], `'${compound}'에서 '${m[2]}' 앞을 띄어 써야 해요.`, 'spacing');
     });
 
     // ── 띄어쓰기: 의존명사 앞 띄기 ──────────────────────────────────────────
