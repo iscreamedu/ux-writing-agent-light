@@ -6100,7 +6100,7 @@ ${glossaryStr}
     const rows = items.map((item, i) => {
       if (em) return `
         <div id="popup-row-${i}" class="group flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 mb-2 bg-white hover:border-indigo-300 transition-colors" draggable="true"
-          ondragstart="App._popupDragStart(event,${i})"
+          ondragstart="if(event.target.tagName==='INPUT'){event.preventDefault();return;}App._popupDragStart(event,${i})"
           ondragover="App._popupDragOver(event,${i})"
           ondragleave="App._popupDragLeave(event,${i})"
           ondrop="App._popupDrop(event,${i})"
