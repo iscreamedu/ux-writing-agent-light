@@ -6099,17 +6099,18 @@ ${glossaryStr}
     const GRIP = `<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>`;
     const rows = items.map((item, i) => {
       if (em) return `
-        <div id="popup-row-${i}" class="group flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 mb-2 bg-white hover:border-indigo-300 transition-colors" draggable="true"
-          ondragstart="if(event.target.tagName==='INPUT'){event.preventDefault();return;}App._popupDragStart(event,${i})"
+        <div id="popup-row-${i}" class="group flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 mb-2 bg-white hover:border-indigo-300 transition-colors" draggable="false"
+          ondragstart="App._popupDragStart(event,${i})"
           ondragover="App._popupDragOver(event,${i})"
           ondragleave="App._popupDragLeave(event,${i})"
           ondrop="App._popupDrop(event,${i})"
           ondragend="App._popupDragEnd()">
-          <span class="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400 flex-shrink-0 flex items-center select-none">${GRIP}</span>
+          <span class="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400 flex-shrink-0 flex items-center select-none"
+            onmousedown="document.getElementById('popup-row-${i}').setAttribute('draggable','true')"
+            onmouseup="document.getElementById('popup-row-${i}').setAttribute('draggable','false')">${GRIP}</span>
           <input type="text" value="${this._esc(item)}" id="popup-input-${i}"
             class="flex-1 text-sm text-slate-700 bg-transparent outline-none"
             onkeydown="if(event.key==='Enter'){this.blur()}if(event.key==='Escape'){this.value=App._getPopupRule(${i});this.blur()}"
-            onmousedown="event.stopPropagation()"
             onblur="App._savePopupInline(${i},this.value)" />
           <button onclick="App.deletePopupGuideItem(${i})" class="flex-shrink-0 text-slate-300 hover:text-red-400 p-0.5 rounded transition-colors" title="삭제" onmousedown="event.stopPropagation()">${TRASH}</button>
         </div>`;
