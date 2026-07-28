@@ -2574,6 +2574,22 @@ const App = {
         });
       }
     });
+
+    // 조사 오타 검사: 모음 끝 명사 + 르/로 → 를/로 (를 대신 르 입력 오타)
+    const particleRe = /([가-힣])르(?=[^가-힣]|$)/g;
+    let pm;
+    while ((pm = particleRe.exec(text)) !== null) {
+      const code = pm[1].charCodeAt(0) - 0xAC00;
+      const jongseong = code % 28;
+      if (jongseong === 0) { // 모음으로 끝나는 음절
+        const wrong = pm[1] + '르';
+        const correct = pm[1] + '를';
+        if (!issues.some(i => i.token === wrong)) {
+          issues.push({ token: wrong, suggestion: correct, description: `${wrong} → ${correct}`, subtype: 'spell' });
+        }
+      }
+    }
+
     return issues;
   },
 
