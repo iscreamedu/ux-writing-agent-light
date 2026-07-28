@@ -2585,6 +2585,10 @@ const App = {
       { wrong: '를',   correct: '을',   needsVowel: false }, // 학생를 → 학생을
       { wrong: '로',   correct: '으로', needsVowel: false, exceptJongseong: [8] }, // 학생로 → 학생으로 (ㄹ받침 제외)
       { wrong: '으',   correct: '을',   needsVowel: false }, // 학습으 → 학습을
+      { wrong: '은',   correct: '는',   needsVowel: true  }, // 공부은 → 공부는
+      { wrong: '는',   correct: '은',   needsVowel: false }, // 학생는 → 학생은
+      { wrong: '과',   correct: '와',   needsVowel: true  }, // 공부과 → 공부와
+      { wrong: '와',   correct: '과',   needsVowel: false }, // 학생와 → 학생과
     ];
     for (const check of particleChecks) {
       const esc = check.wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
