@@ -2771,6 +2771,16 @@ const App = {
         if (!item.improved) return;
         const fixed = this._applyParticleCorrections(item.improved);
         if (fixed !== item.improved) item.improved = fixed;
+        // 토큰이 improved에 없는 stale 조사 이슈 제거 (예: 데이타→데이터 후 "타르" 이슈 제거)
+        item.issues = item.issues.filter(i => {
+          if (i.type !== 'spelling' || i.subtype !== 'spell') return true;
+          if (!i.token) return true;
+          // particle 이슈: token이 개선 결과에도 원문에도 없으면 stale
+          const inOriginal = item.original.includes(i.token);
+          const inImproved = item.improved.includes(i.token);
+          if (!inOriginal && !inImproved) return false;
+          return true;
+        });
       });
 
       // 2단계: 개선안 띄어쓰기 교정 (SPELL_DATA 규칙)
