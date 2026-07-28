@@ -3254,6 +3254,11 @@ const App = {
         // 이미 같은 설명의 spelling 이슈가 있으면 스킵
         const dup = item.issues.some(i => i.type === 'spelling' && i.description === sp.description);
         if (dup) return;
+        // 기존 이슈의 token이 새 이슈 token의 앞부분이면 중복 — 예: "오랫만" 이미 있으면 "오랫만에" 스킵
+        const coveredByExisting = item.issues.some(i =>
+          i.type === 'spelling' && i.token && sp.token && sp.token.startsWith(i.token)
+        );
+        if (coveredByExisting) return;
 
         item.issues.push({
           type:        'spelling',
