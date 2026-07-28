@@ -2578,19 +2578,28 @@ const App = {
     // 조사 오타 검사: 받침 유무에 따른 조사 오류 감지
     // needsVowel: true = 모음 끝 음절에 붙어야 올바른 조사인데 잘못 쓴 경우
     // needsVowel: false = 자음 끝 음절에 붙어야 올바른 조사인데 잘못 쓴 경우
-    const particleChecks = [
-      { wrong: '르',   correct: '를',   needsVowel: true  }, // 공부르 → 공부를
-      { wrong: '을',   correct: '를',   needsVowel: true  }, // 공부을 → 공부를
-      { wrong: '으로', correct: '로',   needsVowel: true  }, // 공부으로 → 공부로
-      { wrong: '를',   correct: '을',   needsVowel: false }, // 학생를 → 학생을
-      { wrong: '로',   correct: '으로', needsVowel: false, exceptJongseong: [8] }, // 학생로 → 학생으로 (ㄹ받침 제외)
-      { wrong: '으',   correct: '을',   needsVowel: false }, // 학습으 → 학습을
-      { wrong: '은',   correct: '는',   needsVowel: true  }, // 공부은 → 공부는
-      { wrong: '는',   correct: '은',   needsVowel: false }, // 학생는 → 학생은
-      { wrong: '과',   correct: '와',   needsVowel: true  }, // 공부과 → 공부와
-      { wrong: '와',   correct: '과',   needsVowel: false }, // 학생와 → 학생과
-    ];
-    for (const check of particleChecks) {
+    const particleIssues = this._detectParticleIssues(text);
+    issues.push(...particleIssues);
+
+    return issues;
+  },
+
+  PARTICLE_CHECKS: [
+      { wrong: '르',   correct: '를',   needsVowel: true  },
+      { wrong: '을',   correct: '를',   needsVowel: true  },
+      { wrong: '으로', correct: '로',   needsVowel: true  },
+      { wrong: '를',   correct: '을',   needsVowel: false },
+      { wrong: '로',   correct: '으로', needsVowel: false, exceptJongseong: [8] },
+      { wrong: '으',   correct: '을',   needsVowel: false },
+      { wrong: '은',   correct: '는',   needsVowel: true  },
+      { wrong: '는',   correct: '은',   needsVowel: false },
+      { wrong: '과',   correct: '와',   needsVowel: true  },
+      { wrong: '와',   correct: '과',   needsVowel: false },
+  ],
+
+  _detectParticleIssues(text) {
+    const issues = [];
+    for (const check of this.PARTICLE_CHECKS) {
       const esc = check.wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const re = new RegExp(`([가-힣])${esc}(?=[^가-힣]|$)`, 'g');
       let pm;
@@ -2610,6 +2619,25 @@ const App = {
     }
 
     return issues;
+  },
+
+  // 조사 오타를 텍스트에 직접 적용 (SPELL_DATA 교정 후 improved에 재실행용)
+  _applyParticleCorrections(text) {
+    let result = text;
+    for (const check of this.PARTICLE_CHECKS) {
+      const esc = check.wrong.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`([가-힣])${esc}(?=[^가-힣]|$)`, 'g');
+      result = result.replace(re, (_, prev) => {
+        const code = prev.charCodeAt(0) - 0xAC00;
+        const jongseong = code % 28;
+        const isVowelEnding = jongseong === 0;
+        if (check.needsVowel && !isVowelEnding) return prev + check.wrong;
+        if (!check.needsVowel && isVowelEnding) return prev + check.wrong;
+        if (check.exceptJongseong?.includes(jongseong)) return prev + check.wrong;
+        return prev + check.correct;
+      });
+    }
+    return result;
   },
 
   // 개선안 띄어쓰기 규칙 교정 (SPELL_DATA 기반 + 조사 규칙)
@@ -2730,6 +2758,13 @@ const App = {
       // 1단계: SPELL_DATA 기반 규칙 맞춤법 검사 (API 불필요)
       const dataIssues = this._checkSpellingWithData(originalText);
       this._mergeSpellIssues(result, dataIssues);
+
+      // 1.5단계: 조사 교정을 item.improved에 재적용 (SPELL_DATA 교정 후 글자가 바뀌어 토큰이 달라지는 문제 해결)
+      result.items.forEach(item => {
+        if (!item.improved) return;
+        const fixed = this._applyParticleCorrections(item.improved);
+        if (fixed !== item.improved) item.improved = fixed;
+      });
 
       // 2단계: 개선안 띄어쓰기 교정 (SPELL_DATA 규칙)
       const targets = result.items.filter(i => i.improved);
