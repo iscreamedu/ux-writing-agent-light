@@ -2970,6 +2970,20 @@ const App = {
       addIssue(m[1] + '수없', m[1] + ' 수 없', `'수 없다'는 띄어 써야 해요.`);
     });
 
+    // 조사 + 있다/없다 붙여쓰기: 계획이있나요 → 계획이 있나요
+    scanRegex(/([이가을를은는도만에서와과])(있|없)/g, m => {
+      const before = text.slice(0, m.index);
+      if (before.endsWith(' ')) return;
+      let ws = m.index;
+      while (ws > 0 && !/\s/.test(text[ws - 1])) ws--;
+      let we = m.index + m[0].length;
+      while (we < text.length && !/\s/.test(text[we])) we++;
+      const fullToken = text.slice(ws, we);
+      const fixedToken = fullToken.replace(new RegExp(`(${m[1]})(${m[2]})`), '$1 $2');
+      if (fixedToken === fullToken) return;
+      addIssue(fullToken, fixedToken, `'${m[1]}' 뒤에서 '${m[2]}' 앞을 띄어 써야 해요.`, 'spacing');
+    });
+
     // 해야한다/해야합니다/해야해/해야해요
     const hayaRules = [
       ['해야한다', '해야 한다'],
