@@ -3339,6 +3339,21 @@ ${glossaryStr}
         issues.push({ type:'spelling', severity:'error', description:'"아니오" → "아니요" (표준어)', suggestion: fixed, _applyTo: text => text.replace(/아니오/g, '아니요') });
       }
 
+      const _stdChecks = [
+        { re: /되요/g,   to: '돼요',   label: '되요 → 돼요' },
+        { re: /몇일/g,   to: '며칠',   label: '몇일 → 며칠' },
+        { re: /오랫만/g, to: '오랜만', label: '오랫만 → 오랜만' },
+        { re: /금새/g,   to: '금세',   label: '금새 → 금세' },
+        { re: /컨텐츠/g, to: '콘텐츠', label: '컨텐츠 → 콘텐츠' },
+        { re: /데이타/g, to: '데이터', label: '데이타 → 데이터' },
+      ];
+      _stdChecks.forEach(({ re, to, label }) => {
+        if (re.test(trimmed)) {
+          const fixed = trimmed.replace(re, to);
+          issues.push({ type:'spelling', severity:'error', description:`"${label}" (표준어)`, suggestion: fixed, _applyTo: text => text.replace(re, to) });
+        }
+      });
+
       if (/해\s*주시기\s*바랍니다/.test(trimmed)) {
         const fixed = trimmed.replace(/해\s*주시기\s*바랍니다/g, '해 주세요');
         issues.push({ type:'ux_writing', severity:'warning', description:'"해주시기 바랍니다" → "해 주세요" (UX Writing 가이드)', suggestion: fixed, _applyTo: text => text.replace(/해\s*주시기\s*바랍니다/g, '해 주세요') });
