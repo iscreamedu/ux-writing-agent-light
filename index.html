@@ -5790,6 +5790,7 @@ ${glossaryStr}
         popupGuide: JSON.parse(JSON.stringify(Store.getPopupGuide(t))),
       };
     });
+    this._editSnapshot._commonPhrases = JSON.parse(JSON.stringify(Store.getCommonPhrases()));
     this._editMode = true;
     this._updateEditModeUI();
     this._renderGuideList();
@@ -6185,6 +6186,10 @@ ${glossaryStr}
         Store.setGuidelines(t, snap.guidelines);
         Store.setPopupGuide(t, snap.popupGuide);
       });
+      if (this._editSnapshot._commonPhrases) {
+        Store.setCommonPhrases(this._editSnapshot._commonPhrases);
+      }
+      localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     }
     this._editMode = false;
     this._editSnapshot = null;
