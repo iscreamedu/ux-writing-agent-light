@@ -6444,7 +6444,7 @@ ${glossaryStr}
     items.forEach(item => {
       const cat = item.category?.trim() || '기타';
       if (!groups[cat]) { groups[cat] = []; ORDER.push(cat); }
-      groups[cat].push({ question: item.question || item.text || '', button: item.button?.trim() || '' });
+      groups[cat].push({ question: item.question || item.text || '', button: (item.button || item.note || '').trim() });
     });
     const html = ORDER.map(cat => `
       <div class="border border-slate-200 rounded-lg overflow-hidden mb-4">
