@@ -2,7 +2,47 @@
   "little": {
     "forbidden": [],
     "guidelines": [],
-    "popupGuide": []
+    "popupGuide": [],
+    "commonPhrases": [
+      {
+        "category": "리스트 종료",
+        "note": "네, 아니요",
+        "text": "'콘텐츠명'을/를 끝낼까요?"
+      },
+      {
+        "category": "콘텐츠 종료",
+        "note": "네, 아니요",
+        "text": "학습창을 닫을까요?",
+        "button": "네, 아니요",
+        "question": "학습창을 닫을까요?"
+      },
+      {
+        "category": "내공상자",
+        "text": "내공상자에 담을까요?",
+        "note": "네, 아니요"
+      },
+      {
+        "category": "내공상자",
+        "text": "이미 내공상자에 담겨 있어요.",
+        "note": "확인",
+        "question": "이미 내공상자에 담겨 있어요."
+      },
+      {
+        "category": "토스트 팝업",
+        "question": "삭제했어요.",
+        "button": ""
+      },
+      {
+        "category": "토스트 팝업",
+        "question": "내공상자에 담았어요.",
+        "button": ""
+      },
+      {
+        "category": "토스트 팝업",
+        "question": "신고했어요.",
+        "button": ""
+      }
+    ]
   },
   "elementary": {
     "forbidden": [
@@ -334,9 +374,49 @@
         "example": "프로필, 마이페이지"
       },
       {
-        "title": "질문의 버튼",
+        "title": "질문에 대한 버튼",
         "content": "네/아니요 또는 대칭되는 표현",
         "example": "네, 다시 선택"
+      }
+    ],
+    "commonPhrases": [
+      {
+        "category": "리스트 종료",
+        "note": "네, 아니요",
+        "text": "'콘텐츠명'을/를 끝낼까요?"
+      },
+      {
+        "category": "콘텐츠 종료",
+        "note": "네, 아니요",
+        "text": "학습창을 닫을까요?",
+        "button": "네, 아니요",
+        "question": "학습창을 닫을까요?"
+      },
+      {
+        "category": "내공상자",
+        "text": "내공상자에 담을까요?",
+        "note": "네, 아니요"
+      },
+      {
+        "category": "내공상자",
+        "text": "이미 내공상자에 담겨 있어요.",
+        "note": "확인",
+        "question": "이미 내공상자에 담겨 있어요."
+      },
+      {
+        "category": "토스트 팝업",
+        "question": "삭제했어요.",
+        "button": ""
+      },
+      {
+        "category": "토스트 팝업",
+        "question": "내공상자에 담았어요.",
+        "button": ""
+      },
+      {
+        "category": "토스트 팝업",
+        "question": "신고했어요.",
+        "button": ""
       }
     ]
   },
@@ -533,6 +613,46 @@
         ]
       }
     ],
-    "popupGuide": []
+    "popupGuide": [],
+    "commonPhrases": [
+      {
+        "category": "리스트 종료",
+        "note": "네, 아니요",
+        "text": "'콘텐츠명'을/를 끝낼까요?"
+      },
+      {
+        "category": "콘텐츠 종료",
+        "note": "네, 아니요",
+        "text": "학습창을 닫을까요?",
+        "button": "네, 아니요",
+        "question": "학습창을 닫을까요?"
+      },
+      {
+        "category": "내공상자",
+        "text": "내공상자에 담을까요?",
+        "note": "네, 아니요"
+      },
+      {
+        "category": "내공상자",
+        "text": "이미 내공상자에 담겨 있어요.",
+        "note": "확인",
+        "question": "이미 내공상자에 담겨 있어요."
+      },
+      {
+        "category": "토스트 팝업",
+        "question": "삭제했어요.",
+        "button": ""
+      },
+      {
+        "category": "토스트 팝업",
+        "question": "내공상자에 담았어요.",
+        "button": ""
+      },
+      {
+        "category": "토스트 팝업",
+        "question": "신고했어요.",
+        "button": ""
+      }
+    ]
   }
 }
