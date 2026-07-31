@@ -1172,6 +1172,7 @@ if (_mem.commonPhrases) {
     if (_mem[t] && !_mem[t].commonPhrases) _mem[t].commonPhrases = JSON.parse(JSON.stringify(_mem.commonPhrases));
   });
   delete _mem.commonPhrases;
+  localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
 }
 ['little','elementary','parent'].forEach(t => { if (_mem[t] && !_mem[t].commonPhrases) _mem[t].commonPhrases = []; });
 
