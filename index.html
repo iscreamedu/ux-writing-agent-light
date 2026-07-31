@@ -6386,7 +6386,7 @@ ${glossaryStr}
     const title = document.getElementById('popup-add-input')?.value.trim() || '';
     if (!title) return;
     const items = this._popupItemsNorm();
-    items.push({ title, content: '', example: '' });
+    items.unshift({ title, content: '', example: '' });
     Store.setPopupGuide(this._adminTab, items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderPopupGuideList();
@@ -6450,6 +6450,7 @@ ${glossaryStr}
               <input type="text" value="${this._esc(cat)}" placeholder="분류"
                 class="flex-1 text-sm font-semibold text-slate-700 bg-transparent outline-none focus:bg-white focus:border focus:border-indigo-300 focus:rounded focus:px-2 focus:py-0.5"
                 onblur="App._renameCpCategory('${this._esc(cat)}',this.value)" />
+              <button onclick="App._deleteCpCategory('${this._esc(cat)}')" class="flex-shrink-0 text-slate-300 hover:text-red-400 p-0.5 rounded transition-colors" title="분류 삭제">${TRASH}</button>
             </div>
             ${itemRows}
             <div class="px-3 py-2 border-t border-slate-100 bg-white">
@@ -6506,6 +6507,12 @@ ${glossaryStr}
     Store.setCommonPhrases(items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
   },
+  _deleteCpCategory(cat) {
+    const items = Store.getCommonPhrases().filter(it => (it.category?.trim() || '기타') !== cat);
+    Store.setCommonPhrases(items);
+    localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
+    this._renderCommonPhraseList();
+  },
   _renameCpCategory(oldCat, newCat) {
     newCat = newCat.trim();
     if (!newCat || newCat === oldCat) return;
@@ -6539,7 +6546,7 @@ ${glossaryStr}
     const cat = catEl?.value.trim();
     if (!cat) return;
     const items = Store.getCommonPhrases();
-    items.push({ category: cat, question: '', button: '' });
+    items.unshift({ category: cat, question: '', button: '' });
     Store.setCommonPhrases(items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderCommonPhraseList();
@@ -7048,7 +7055,7 @@ ${glossaryStr}
   _addForbiddenCat(input) {
     const name = input.value.trim();
     if (!name) return;
-    const cats = [...Store.getForbiddenCategories(this._adminTab), { category: name, words: [] }];
+    const cats = [{ category: name, words: [] }, ...Store.getForbiddenCategories(this._adminTab)];
     Store.setForbiddenCategories(this._adminTab, cats);
     input.value = '';
     this._renderForbiddenList();
