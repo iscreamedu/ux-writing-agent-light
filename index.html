@@ -575,6 +575,11 @@ textarea:focus, input:focus, select:focus {
               <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
               팝업 규칙
             </button>
+            <button onclick="App.setAdminSection('commonphrase')" id="asec-commonphrase"
+              class="admin-sec-tab w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition text-left text-slate-500 hover:bg-slate-50 hover:text-slate-700">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              팝업 공통 문구
+            </button>
           </nav>
         </div>
 
@@ -630,6 +635,17 @@ textarea:focus, input:focus, select:focus {
               </span>
             </div>
             <div id="popup-guide-list"></div>
+          </div>
+
+<!-- 팝업 공통 문구 -->
+          <div id="asec-content-commonphrase" class="hidden bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+            <div class="mb-4 flex items-start justify-between gap-2">
+              <div>
+                <h3 class="font-bold text-slate-800">팝업 공통 문구</h3>
+                <p class="text-xs text-slate-400 mt-0.5">팝업·모달에서 공통으로 사용하는 문구를 관리합니다.</p>
+              </div>
+            </div>
+            <div id="commonphrase-list"></div>
           </div>
 
 <!-- 금지어 -->
@@ -1009,6 +1025,7 @@ textarea:focus, input:focus, select:focus {
 // ────────────────────────────────────────
 /* __DATA_START__ */
 const EMBEDDED_DATA = {
+  "commonPhrases": [],
   "little": {
     "forbidden": [],
     "guidelines": [],
@@ -1159,6 +1176,8 @@ const Store = {
   setGuidelines(type,v){ if (_mem[type]) _mem[type].guidelines = JSON.parse(JSON.stringify(v)); },
   getPopupGuide(type)  { return _mem[type]?.popupGuide ?? []; },
   setPopupGuide(type,v){ if (_mem[type]) _mem[type].popupGuide = v; },
+  getCommonPhrases()   { return _mem.commonPhrases ?? []; },
+  setCommonPhrases(v)  { _mem.commonPhrases = v; },
 
   _serverUrl: '/admin-data',
 
@@ -5720,6 +5739,7 @@ ${glossaryStr}
     this._renderForbiddenList();
     this._renderGuideList();
     this._renderPopupGuideList();
+    this._renderCommonPhraseList();
     this.setAdminSection(this._adminSection);
   },
 
@@ -6272,7 +6292,7 @@ ${glossaryStr}
 
   setAdminSection(sec) {
     this._adminSection = sec;
-    const sections = ['guide', 'popup', 'forbidden'];
+    const sections = ['guide', 'popup', 'commonphrase', 'forbidden'];
     sections.forEach(s => {
       const tab = document.getElementById(`asec-${s}`);
       const content = document.getElementById(`asec-content-${s}`);
@@ -6282,6 +6302,7 @@ ${glossaryStr}
       tab.className = isActive
         ? 'admin-sec-tab w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition text-left bg-slate-100 text-slate-800'
         : 'admin-sec-tab w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition text-left text-slate-500 hover:bg-slate-50 hover:text-slate-700';
+      if (isActive && s === 'commonphrase') this._renderCommonPhraseList();
     });
   },
   _renderPopupGuideList() {
@@ -6324,6 +6345,66 @@ ${glossaryStr}
     container.innerHTML = `<div>${rows}</div>${addRow}`;
   },
   _getPopupRule(i) { return (Store.getPopupGuide(this._adminTab)[i]) || ''; },
+
+  // ── 팝업 공통 문구 ──────────────────────────────────────────────────────
+  _renderCommonPhraseList() {
+    const items = Store.getCommonPhrases();
+    const container = document.getElementById('commonphrase-list');
+    if (!container) return;
+    const em = this._editMode;
+    const TRASH = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>`;
+    if (!items.length && !em) { container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">등록된 문구가 없습니다.</p>'; return; }
+    const rows = items.map((item, i) => {
+      if (em) return `
+        <div class="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 mb-2 bg-white hover:border-indigo-300 transition-colors">
+          <input type="text" value="${this._esc(item.category || '')}" placeholder="분류 (예: 버튼, 오류)"
+            class="w-24 flex-shrink-0 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded px-2 py-1 outline-none focus:border-indigo-300"
+            onblur="App._saveCommonPhraseField(${i},'category',this.value)" />
+          <input type="text" value="${this._esc(item.text || '')}" placeholder="문구 입력"
+            class="flex-1 text-sm text-slate-700 bg-transparent outline-none"
+            onkeydown="if(event.key==='Enter')this.blur()"
+            onblur="App._saveCommonPhraseField(${i},'text',this.value)" />
+          <button onclick="App._deleteCommonPhrase(${i})" class="flex-shrink-0 text-slate-300 hover:text-red-400 p-0.5 rounded transition-colors" title="삭제">${TRASH}</button>
+        </div>`;
+      return `<div class="flex items-center gap-2 border-b border-slate-100 py-2 last:border-0 px-1">
+        ${item.category ? `<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 flex-shrink-0">${this._esc(item.category)}</span>` : ''}
+        <span class="text-sm text-slate-700">${this._esc(item.text || '')}</span>
+      </div>`;
+    }).join('');
+    const addRow = em ? `
+      <div class="flex items-center gap-2 mt-3">
+        <input type="text" id="cp-add-cat" placeholder="분류" class="w-24 flex-shrink-0 text-xs border border-slate-200 rounded px-2 py-2 outline-none focus:border-indigo-300 text-slate-700 placeholder-slate-300" />
+        <input type="text" id="cp-add-text" placeholder="새 문구 입력" class="flex-1 text-sm border border-slate-200 rounded-md px-3 py-2 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300"
+          onkeydown="if(event.key==='Enter'){App._addCommonPhrase()}" />
+        <button onclick="App._addCommonPhrase()" class="text-sm px-3 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition flex-shrink-0">+ 추가</button>
+      </div>` : '';
+    container.innerHTML = `<div>${rows}</div>${addRow}`;
+  },
+  _saveCommonPhraseField(i, field, val) {
+    const items = Store.getCommonPhrases();
+    if (!items[i]) return;
+    items[i][field] = val.trim();
+    Store.setCommonPhrases(items);
+    localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
+  },
+  _deleteCommonPhrase(i) {
+    const items = Store.getCommonPhrases();
+    items.splice(i, 1);
+    Store.setCommonPhrases(items);
+    localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
+    this._renderCommonPhraseList();
+  },
+  _addCommonPhrase() {
+    const catEl  = document.getElementById('cp-add-cat');
+    const textEl = document.getElementById('cp-add-text');
+    const text = textEl?.value.trim();
+    if (!text) return;
+    const items = Store.getCommonPhrases();
+    items.push({ category: catEl?.value.trim() || '', text });
+    Store.setCommonPhrases(items);
+    localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
+    this._renderCommonPhraseList();
+  },
   _popupDragSrc: null,
   _popupDragStart(e, i) {
     this._popupDragSrc = i;
