@@ -6415,24 +6415,27 @@ ${glossaryStr}
       const groupsHtml = ORDER.map(cat => {
         const catId = 'cpg-' + btoa(unescape(encodeURIComponent(cat))).replace(/[^a-zA-Z0-9]/g,'').slice(0,12);
         const itemRows = groups[cat].map(({ item, idx }) => `
-          <div id="cp-row-${idx}" class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors" draggable="false"
+          <div id="cp-row-${idx}" class="flex items-start gap-2 px-3 py-2 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors" draggable="false"
             ondragstart="App._cpDragStart(event,${idx})"
             ondragover="App._cpDragOver(event,${idx})"
             ondragleave="App._cpDragLeave(event,${idx})"
             ondrop="App._cpDrop(event,${idx})"
             ondragend="App._cpDragEnd()">
-            <span class="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400 flex-shrink-0 flex items-center select-none"
+            <span class="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400 flex-shrink-0 flex items-center mt-1.5 select-none"
               onmousedown="document.getElementById('cp-row-${idx}').setAttribute('draggable','true')"
               onmouseup="document.getElementById('cp-row-${idx}').setAttribute('draggable','false')">${GRIP}</span>
-            <input type="text" value="${this._esc(item.question || item.text || '')}" placeholder="질문"
-              class="flex-1 text-sm text-slate-700 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white"
-              onkeydown="if(event.key==='Enter')this.blur()"
-              onblur="App._saveCommonPhraseField(${idx},'question',this.value)" />
+            <textarea placeholder="질문" rows="1"
+              class="flex-1 text-sm text-slate-700 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white resize-none overflow-hidden"
+              style="field-sizing:content;min-height:2rem;"
+              onblur="App._saveCommonPhraseField(${idx},'question',this.value)"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+              onfocus="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+              >${this._esc(item.question || item.text || '')}</textarea>
             <input type="text" value="${this._esc(item.button || item.note || '')}" placeholder="버튼"
-              class="w-36 flex-shrink-0 text-sm text-slate-700 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white"
+              class="w-36 flex-shrink-0 text-sm text-slate-700 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white mt-0.5"
               onkeydown="if(event.key==='Enter')this.blur()"
               onblur="App._saveCommonPhraseField(${idx},'button',this.value)" />
-            <button onclick="App._deleteCommonPhrase(${idx})" class="flex-shrink-0 text-slate-300 hover:text-red-400 p-0.5 rounded transition-colors" title="삭제">${TRASH}</button>
+            <button onclick="App._deleteCommonPhrase(${idx})" class="flex-shrink-0 text-slate-300 hover:text-red-400 p-0.5 rounded transition-colors mt-1" title="삭제">${TRASH}</button>
           </div>`).join('');
         return `
           <div class="border border-slate-200 rounded-lg overflow-hidden mb-3">
@@ -6442,11 +6445,12 @@ ${glossaryStr}
                 onblur="App._renameCpCategory('${this._esc(cat)}',this.value)" />
             </div>
             ${itemRows}
-            <div class="flex items-center gap-2 px-3 py-2 bg-slate-50 border-t border-dashed border-slate-200">
-              <span class="w-3 h-3 flex-shrink-0"></span>
-              <input type="text" placeholder="질문" data-cat="${this._esc(cat)}" id="${catId}-q"
-                class="flex-1 text-sm border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300"
-                onkeydown="if(event.key==='Enter')App._addCpToGroup('${this._esc(cat)}')" />
+            <div class="flex items-start gap-2 px-3 py-2 bg-slate-50 border-t border-dashed border-slate-200">
+              <span class="w-3 h-3 flex-shrink-0 mt-1.5"></span>
+              <textarea placeholder="질문" rows="1" data-cat="${this._esc(cat)}" id="${catId}-q"
+                class="flex-1 text-sm border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300 resize-none overflow-hidden"
+                style="field-sizing:content;min-height:2rem;"
+                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
               <input type="text" placeholder="버튼" id="${catId}-b"
                 class="w-36 flex-shrink-0 text-sm border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300"
                 onkeydown="if(event.key==='Enter')App._addCpToGroup('${this._esc(cat)}')" />
@@ -6458,12 +6462,13 @@ ${glossaryStr}
       const newGroupRow = `
         <div class="border border-dashed border-slate-300 rounded-lg px-3 py-2.5 mt-1">
           <p class="text-xs text-slate-400 mb-2">새 분류 추가</p>
-          <div class="flex items-center gap-2">
-            <input type="text" id="cp-add-cat" placeholder="분류" class="w-28 flex-shrink-0 text-sm border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 text-slate-700 placeholder-slate-300" />
-            <input type="text" id="cp-add-question" placeholder="질문" class="flex-1 text-sm border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300"
-              onkeydown="if(event.key==='Enter'){App._addCommonPhrase()}" />
-            <input type="text" id="cp-add-button" placeholder="버튼" class="w-36 flex-shrink-0 text-sm border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300"
-              onkeydown="if(event.key==='Enter'){App._addCommonPhrase()}" />
+          <div class="flex items-start gap-2">
+            <input type="text" id="cp-add-cat" placeholder="분류" class="w-28 flex-shrink-0 text-sm border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 text-slate-700 placeholder-slate-300 mt-0.5" />
+            <textarea id="cp-add-question" placeholder="질문" rows="1"
+              class="flex-1 text-sm border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300 resize-none overflow-hidden"
+              style="field-sizing:content;min-height:2rem;"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+            <input type="text" id="cp-add-button" placeholder="버튼" class="w-36 flex-shrink-0 text-sm border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300 mt-0.5" />
             <button onclick="App._addCommonPhrase()" class="text-sm px-3 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition flex-shrink-0">+ 추가</button>
           </div>
         </div>`;
