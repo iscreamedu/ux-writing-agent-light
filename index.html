@@ -5863,6 +5863,7 @@ ${glossaryStr}
     this._updateEditModeUI();
     this._renderGuideList();
     this._renderPopupGuideList();
+    this._renderCommonPhraseList();
     this._renderForbiddenList();
   },
   _exitHistoryPreview() {
@@ -5897,6 +5898,7 @@ ${glossaryStr}
       this._updateEditModeUI();
       this._renderGuideList();
       this._renderPopupGuideList();
+      this._renderCommonPhraseList();
       this._renderForbiddenList();
       this.showToast('이전 버전으로 되돌렸습니다.');
     });
@@ -5986,6 +5988,7 @@ ${glossaryStr}
     this._updateEditModeUI();
     this._renderGuideList();
     this._renderPopupGuideList();
+    this._renderCommonPhraseList();
     this._renderForbiddenList();
     this.showToast('이전 버전으로 되돌렸습니다.');
   },
@@ -6083,6 +6086,7 @@ ${glossaryStr}
       this._updateEditModeUI();
       this._renderGuideList();
       this._renderPopupGuideList();
+      this._renderCommonPhraseList();
       this._renderForbiddenList();
       await this._pushGuideToGithub();
     } catch {
@@ -6178,7 +6182,7 @@ ${glossaryStr}
     this._updateEditModeUI();
     this._renderGuideList();
     this._renderPopupGuideList();
-
+    this._renderCommonPhraseList();
     this._renderForbiddenList();
   },
   _updateEditModeUI() {
