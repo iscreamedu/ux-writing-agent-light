@@ -6360,9 +6360,18 @@ ${glossaryStr}
     if (!items.length && !em) { container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">등록된 문구가 없습니다.</p>'; return; }
 
     if (em) {
+      const GRIP = `<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>`;
       // 편집 모드: 분류 / 질문 / 버튼 순서로 입력
       const rows = items.map((item, i) => `
-        <div class="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 mb-2 bg-white hover:border-indigo-300 transition-colors">
+        <div id="cp-row-${i}" class="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 mb-2 bg-white hover:border-indigo-300 transition-colors" draggable="false"
+          ondragstart="App._cpDragStart(event,${i})"
+          ondragover="App._cpDragOver(event,${i})"
+          ondragleave="App._cpDragLeave(event,${i})"
+          ondrop="App._cpDrop(event,${i})"
+          ondragend="App._cpDragEnd()">
+          <span class="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400 flex-shrink-0 flex items-center select-none"
+            onmousedown="document.getElementById('cp-row-${i}').setAttribute('draggable','true')"
+            onmouseup="document.getElementById('cp-row-${i}').setAttribute('draggable','false')">${GRIP}</span>
           <input type="text" value="${this._esc(item.category || '')}" placeholder="분류"
             class="w-20 flex-shrink-0 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300"
             onblur="App._saveCommonPhraseField(${i},'category',this.value)" />
@@ -6467,6 +6476,41 @@ ${glossaryStr}
   _popupDragEnd() {
     this._popupDragSrc = null;
     document.querySelectorAll('[id^="popup-row-"]').forEach(el => {
+      el.classList.remove('opacity-40', 'border-indigo-400', 'bg-indigo-50');
+    });
+  },
+  _cpDragSrc: null,
+  _cpDragStart(e, i) {
+    this._cpDragSrc = i;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', i);
+    setTimeout(() => { const el = document.getElementById(`cp-row-${i}`); if (el) el.classList.add('opacity-40'); }, 0);
+  },
+  _cpDragOver(e, i) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (this._cpDragSrc === i) return;
+    const el = document.getElementById(`cp-row-${i}`);
+    if (el) el.classList.add('border-indigo-400', 'bg-indigo-50');
+  },
+  _cpDragLeave(e, i) {
+    const el = document.getElementById(`cp-row-${i}`);
+    if (el) el.classList.remove('border-indigo-400', 'bg-indigo-50');
+  },
+  _cpDrop(e, i) {
+    e.preventDefault();
+    const from = this._cpDragSrc;
+    if (from === null || from === i) return;
+    const items = [...Store.getCommonPhrases()];
+    const [moved] = items.splice(from, 1);
+    items.splice(i, 0, moved);
+    Store.setCommonPhrases(items);
+    localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
+    this._renderCommonPhraseList();
+  },
+  _cpDragEnd() {
+    this._cpDragSrc = null;
+    document.querySelectorAll('[id^="cp-row-"]').forEach(el => {
       el.classList.remove('opacity-40', 'border-indigo-400', 'bg-indigo-50');
     });
   },
