@@ -6155,7 +6155,7 @@ ${glossaryStr}
         row.querySelectorAll('[data-chip]').length > 0
       )) return true;
       // 가이드/팝업/금지어 추가 입력
-      const staticInputs = ['guide-add-input','popup-add-input','forbidden-new-cat-input'];
+      const staticInputs = ['guide-add-input','popup-add-input','forbidden-new-cat-input','cp-add-cat'];
       if (staticInputs.some(id => (document.getElementById(id)?.value || '').trim())) return true;
       return [...document.querySelectorAll('[id^="forbidden-cat-input-"]')].some(el => (el.value || '').trim());
     })();
@@ -6369,17 +6369,13 @@ ${glossaryStr}
         </div>`;
     }).join('');
     const addRow = em ? `
-      <div class="flex items-start gap-2 mt-3 border border-dashed border-slate-300 rounded-lg px-3 py-2.5">
-        <div class="flex-1 flex flex-col gap-1.5 min-w-0">
-          <input type="text" id="popup-add-title" placeholder="제목" class="w-full text-sm border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300" />
-          <input type="text" id="popup-add-content" placeholder="내용" class="w-full text-sm border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300"
-            onkeydown="if(event.key==='Enter'){App._addPopupRule()}" />
-          <input type="text" id="popup-add-example" placeholder="예시 (선택)" class="w-full text-xs border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-400 text-slate-400 placeholder-slate-300"
-            onkeydown="if(event.key==='Enter'){App._addPopupRule()}" />
-        </div>
-        <button onclick="App._addPopupRule()" class="text-sm px-3 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition flex-shrink-0 mt-0.5">+ 추가</button>
+      <div class="flex items-center gap-2 mb-3">
+        <input type="text" id="popup-add-input" placeholder="새 항목 제목 입력" class="flex-1 text-sm border border-slate-200 rounded-md px-3 py-2 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300"
+          onkeydown="if(event.key==='Enter'){App._addPopupRule()}"
+          oninput="document.getElementById('popup-add-btn').disabled=!this.value.trim()" />
+        <button id="popup-add-btn" disabled onclick="App._addPopupRule()" class="text-sm px-3 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition flex-shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none">+ 항목 추가</button>
       </div>` : '';
-    container.innerHTML = `<div>${rows}</div>${addRow}`;
+    container.innerHTML = `${addRow}<div>${rows}</div>`;
   },
   _savePopupField(i, field, val) {
     const items = this._popupItemsNorm();
@@ -6387,12 +6383,10 @@ ${glossaryStr}
     Store.setPopupGuide(this._adminTab, items);
   },
   _addPopupRule() {
-    const title   = document.getElementById('popup-add-title')?.value.trim() || '';
-    const content = document.getElementById('popup-add-content')?.value.trim() || '';
-    const example = document.getElementById('popup-add-example')?.value.trim() || '';
-    if (!title && !content) return;
+    const title = document.getElementById('popup-add-input')?.value.trim() || '';
+    if (!title) return;
     const items = this._popupItemsNorm();
-    items.push({ title, content, example });
+    items.push({ title, content: '', example: '' });
     Store.setPopupGuide(this._adminTab, items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderPopupGuideList();
@@ -6417,7 +6411,7 @@ ${glossaryStr}
         if (!groups[cat]) { groups[cat] = []; ORDER.push(cat); }
         groups[cat].push({ item, idx: i });
       });
-      const groupsHtml = ORDER.map(cat => {
+      const groupsHtml = ORDER.map((cat, gi) => {
         const catId = 'cpg-' + btoa(unescape(encodeURIComponent(cat))).replace(/[^a-zA-Z0-9]/g,'').slice(0,12);
         const itemRows = groups[cat].map(({ item, idx }) => `
           <div id="cp-row-${idx}" class="flex items-start gap-2 px-3 py-2 border-b border-slate-100 last:border-0 bg-slate-50 hover:bg-slate-100 transition-colors" draggable="false"
@@ -6443,41 +6437,44 @@ ${glossaryStr}
             <button onclick="App._deleteCommonPhrase(${idx})" class="flex-shrink-0 text-slate-300 hover:text-red-400 p-0.5 rounded transition-colors mt-1" title="삭제">${TRASH}</button>
           </div>`).join('');
         return `
-          <div class="border border-slate-200 rounded-lg overflow-hidden mb-3">
+          <div id="cpgrp-${gi}" class="border border-slate-200 rounded-lg overflow-hidden mb-3" draggable="false"
+            ondragstart="App._cpGrpDragStart(event,${gi})"
+            ondragover="App._cpGrpDragOver(event,${gi})"
+            ondragleave="App._cpGrpDragLeave(event,${gi})"
+            ondrop="App._cpGrpDrop(event,${gi})"
+            ondragend="App._cpGrpDragEnd()">
             <div class="flex items-center gap-2 px-3 py-2 bg-white border-b border-slate-200">
+              <span class="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400 flex-shrink-0 flex items-center select-none"
+                onmousedown="document.getElementById('cpgrp-${gi}').setAttribute('draggable','true')"
+                onmouseup="document.getElementById('cpgrp-${gi}').setAttribute('draggable','false')">${GRIP}</span>
               <input type="text" value="${this._esc(cat)}" placeholder="분류"
                 class="flex-1 text-sm font-semibold text-slate-700 bg-transparent outline-none focus:bg-white focus:border focus:border-indigo-300 focus:rounded focus:px-2 focus:py-0.5"
                 onblur="App._renameCpCategory('${this._esc(cat)}',this.value)" />
             </div>
             ${itemRows}
-            <div class="flex items-start gap-2 px-3 py-2 bg-slate-100 border-t border-dashed border-slate-200">
-              <span class="w-3 h-3 flex-shrink-0 mt-1.5"></span>
-              <textarea placeholder="질문" rows="1" data-cat="${this._esc(cat)}" id="${catId}-q"
-                class="flex-1 text-sm border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300 resize-none overflow-hidden"
-                style="field-sizing:content;min-height:2rem;"
-                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-              <input type="text" placeholder="버튼" id="${catId}-b"
-                class="w-36 flex-shrink-0 text-sm border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300"
-                onkeydown="if(event.key==='Enter')App._addCpToGroup('${this._esc(cat)}')" />
-              <button onclick="App._addCpToGroup('${this._esc(cat)}')"
-                class="text-xs px-2.5 py-1.5 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 transition flex-shrink-0">+ 추가</button>
+            <div class="px-3 py-2 border-t border-slate-100 bg-white">
+              <div class="flex gap-1.5">
+                <textarea placeholder="질문" rows="1" data-cat="${this._esc(cat)}" id="${catId}-q"
+                  class="flex-1 text-sm border border-slate-200 rounded px-2.5 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300 resize-none overflow-hidden"
+                  style="field-sizing:content;min-height:2rem;"
+                  oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+                <input type="text" placeholder="버튼" id="${catId}-b"
+                  class="w-36 flex-shrink-0 text-sm border border-slate-200 rounded px-2.5 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300"
+                  onkeydown="if(event.key==='Enter')App._addCpToGroup('${this._esc(cat)}')" />
+                <button onclick="App._addCpToGroup('${this._esc(cat)}')"
+                  class="text-xs px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded transition flex-shrink-0">추가</button>
+              </div>
             </div>
           </div>`;
       }).join('');
       const newGroupRow = `
-        <div class="border border-dashed border-slate-300 rounded-lg px-3 py-2.5 mt-1">
-          <p class="text-xs text-slate-400 mb-2">새 분류 추가</p>
-          <div class="flex items-start gap-2">
-            <input type="text" id="cp-add-cat" placeholder="분류" class="w-28 flex-shrink-0 text-sm border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 text-slate-700 placeholder-slate-300 mt-0.5" />
-            <textarea id="cp-add-question" placeholder="질문" rows="1"
-              class="flex-1 text-sm border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300 resize-none overflow-hidden"
-              style="field-sizing:content;min-height:2rem;"
-              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-            <input type="text" id="cp-add-button" placeholder="버튼" class="w-36 flex-shrink-0 text-sm border border-slate-200 rounded px-2 py-1.5 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300 mt-0.5" />
-            <button onclick="App._addCommonPhrase()" class="text-sm px-3 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition flex-shrink-0">+ 추가</button>
-          </div>
+        <div class="flex items-center gap-2 mb-3">
+          <input type="text" id="cp-add-cat" placeholder="새 분류명 입력" class="flex-1 text-sm border border-slate-200 rounded-md px-3 py-2 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300"
+            onkeydown="if(event.key==='Enter'){App._addCommonPhrase()}"
+            oninput="document.getElementById('cp-add-cat-btn').disabled=!this.value.trim()" />
+          <button id="cp-add-cat-btn" disabled onclick="App._addCommonPhrase()" class="text-sm px-3 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition flex-shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none">+ 분류 추가</button>
         </div>`;
-      container.innerHTML = groupsHtml + newGroupRow;
+      container.innerHTML = newGroupRow + groupsHtml;
       return;
     }
 
@@ -6538,13 +6535,11 @@ ${glossaryStr}
     this._renderCommonPhraseList();
   },
   _addCommonPhrase() {
-    const catEl      = document.getElementById('cp-add-cat');
-    const questionEl = document.getElementById('cp-add-question');
-    const buttonEl   = document.getElementById('cp-add-button');
-    const question = questionEl?.value.trim();
-    if (!question) return;
+    const catEl = document.getElementById('cp-add-cat');
+    const cat = catEl?.value.trim();
+    if (!cat) return;
     const items = Store.getCommonPhrases();
-    items.push({ category: catEl?.value.trim() || '', question, button: buttonEl?.value.trim() || '' });
+    items.push({ category: cat, question: '', button: '' });
     Store.setCommonPhrases(items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderCommonPhraseList();
@@ -6616,6 +6611,49 @@ ${glossaryStr}
   _cpDragEnd() {
     this._cpDragSrc = null;
     document.querySelectorAll('[id^="cp-row-"]').forEach(el => {
+      el.classList.remove('opacity-40', 'border-indigo-400', 'bg-indigo-50');
+    });
+  },
+  _cpGrpDragSrc: null,
+  _cpGrpDragStart(e, gi) {
+    this._cpGrpDragSrc = gi;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => { const el = document.getElementById(`cpgrp-${gi}`); if (el) el.classList.add('opacity-40'); }, 0);
+  },
+  _cpGrpDragOver(e, gi) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (gi === this._cpGrpDragSrc) return;
+    const el = document.getElementById(`cpgrp-${gi}`);
+    if (el) el.classList.add('border-indigo-400', 'bg-indigo-50');
+  },
+  _cpGrpDragLeave(e, gi) {
+    const el = document.getElementById(`cpgrp-${gi}`);
+    if (el) el.classList.remove('border-indigo-400', 'bg-indigo-50');
+  },
+  _cpGrpDrop(e, gi) {
+    e.preventDefault();
+    const from = this._cpGrpDragSrc;
+    if (from === null || from === gi) return;
+    // 분류 순서 배열 만들기
+    const items = Store.getCommonPhrases();
+    const groups = {};
+    const ORDER = [];
+    items.forEach(item => {
+      const cat = item.category?.trim() || '기타';
+      if (!groups[cat]) { groups[cat] = []; ORDER.push(cat); }
+      groups[cat].push(item);
+    });
+    const [movedCat] = ORDER.splice(from, 1);
+    ORDER.splice(gi, 0, movedCat);
+    const reordered = ORDER.flatMap(cat => groups[cat]);
+    Store.setCommonPhrases(reordered);
+    localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
+    this._renderCommonPhraseList();
+  },
+  _cpGrpDragEnd() {
+    this._cpGrpDragSrc = null;
+    document.querySelectorAll('[id^="cpgrp-"]').forEach(el => {
       el.classList.remove('opacity-40', 'border-indigo-400', 'bg-indigo-50');
     });
   },
@@ -6936,7 +6974,7 @@ ${glossaryStr}
       </div>`;
     }).join('');
     const addCatRow = em ? `<div class="flex items-center gap-2 mt-3"><input type="text" id="forbidden-new-cat-input" placeholder="새 분류명 입력" class="flex-1 text-sm border border-slate-200 rounded-md px-3 py-2 focus:outline-none focus:border-indigo-400 text-slate-700 placeholder-slate-300" onkeydown="if(event.key==='Enter'){App._addForbiddenCat(this)}" oninput="document.getElementById('forbidden-new-cat-btn').disabled=!this.value.trim()" /><button id="forbidden-new-cat-btn" disabled onclick="App._addForbiddenCat(document.getElementById('forbidden-new-cat-input'))" class="text-sm px-3 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-800 transition flex-shrink-0 whitespace-nowrap disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none">+ 분류 추가</button></div>` : '';
-    container.innerHTML = catsHtml + addCatRow;
+    container.innerHTML = addCatRow + catsHtml;
   },
   _forbiddenWordDragSrc: { ci: -1, wi: -1 },
   _forbiddenWordDragStart(event, ci, wi) {
