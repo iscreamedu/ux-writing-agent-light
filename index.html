@@ -6437,7 +6437,7 @@ ${glossaryStr}
             <button onclick="App._deleteCommonPhrase(${idx})" class="flex-shrink-0 text-slate-300 hover:text-red-400 p-0.5 rounded transition-colors mt-1" title="삭제">${TRASH}</button>
           </div>`).join('');
         return `
-          <div id="cpgrp-${gi}" class="border border-slate-200 rounded-lg overflow-hidden mb-3" draggable="false"
+          <div id="cpgrp-${gi}" class="group border border-slate-200 rounded-lg overflow-hidden mb-3" draggable="false"
             ondragstart="App._cpGrpDragStart(event,${gi})"
             ondragover="App._cpGrpDragOver(event,${gi})"
             ondragleave="App._cpGrpDragLeave(event,${gi})"
@@ -6450,7 +6450,7 @@ ${glossaryStr}
               <input type="text" value="${this._esc(cat)}" placeholder="분류"
                 class="flex-1 text-sm font-semibold text-slate-700 bg-transparent outline-none focus:bg-white focus:border focus:border-indigo-300 focus:rounded focus:px-2 focus:py-0.5"
                 onblur="App._renameCpCategory('${this._esc(cat)}',this.value)" />
-              <button onclick="App._deleteCpCategory('${this._esc(cat)}')" class="flex-shrink-0 text-slate-300 hover:text-red-400 p-0.5 rounded transition-colors" title="분류 삭제">${TRASH}</button>
+              <button onclick="App._deleteCpCategory('${this._esc(cat)}')" class="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-slate-300 hover:text-red-400 p-1 rounded" title="분류 삭제">${TRASH}</button>
             </div>
             ${itemRows}
             <div class="px-3 py-2 border-t border-slate-100 bg-white">
