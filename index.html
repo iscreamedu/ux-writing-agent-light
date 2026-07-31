@@ -1168,10 +1168,14 @@ if (!_mem) {
 }
 // 구버전 마이그레이션: 전역 commonPhrases → 탭별
 if (_mem.commonPhrases) {
-  ['little','elementary','parent'].forEach(t => {
-    if (_mem[t] && !_mem[t].commonPhrases) _mem[t].commonPhrases = JSON.parse(JSON.stringify(_mem.commonPhrases));
-  });
+  if (_mem.elementary) _mem.elementary.commonPhrases = JSON.parse(JSON.stringify(_mem.commonPhrases));
   delete _mem.commonPhrases;
+  localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
+}
+// v2: 잘못 복사된 little/parent commonPhrases 초기화 (1회만)
+if (!_mem._cpMigV2) {
+  ['little','parent'].forEach(t => { if (_mem[t]) _mem[t].commonPhrases = []; });
+  _mem._cpMigV2 = true;
   localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
 }
 ['little','elementary','parent'].forEach(t => { if (_mem[t] && !_mem[t].commonPhrases) _mem[t].commonPhrases = []; });
