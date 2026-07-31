@@ -1034,11 +1034,11 @@ textarea:focus, input:focus, select:focus {
 // ────────────────────────────────────────
 /* __DATA_START__ */
 const EMBEDDED_DATA = {
-  "commonPhrases": [],
   "little": {
     "forbidden": [],
     "guidelines": [],
-    "popupGuide": []
+    "popupGuide": [],
+    "commonPhrases": []
   },
   "elementary": {
     "forbidden": [
@@ -1138,12 +1138,14 @@ const EMBEDDED_DATA = {
     ],
     "popupGuide": [
       "버튼은 질문에 수긍, 반대 순으로 버튼을 배치"
-    ]
+    ],
+    "commonPhrases": []
   },
   "parent": {
     "forbidden": [],
     "guidelines": [],
-    "popupGuide": []
+    "popupGuide": [],
+    "commonPhrases": []
   }
 }
 /* __DATA_END__ */
@@ -1164,6 +1166,14 @@ if (_savedStr) {
 if (!_mem) {
   _mem = JSON.parse(JSON.stringify(EMBEDDED_DATA));
 }
+// 구버전 마이그레이션: 전역 commonPhrases → 탭별
+if (_mem.commonPhrases) {
+  ['little','elementary','parent'].forEach(t => {
+    if (_mem[t] && !_mem[t].commonPhrases) _mem[t].commonPhrases = JSON.parse(JSON.stringify(_mem.commonPhrases));
+  });
+  delete _mem.commonPhrases;
+}
+['little','elementary','parent'].forEach(t => { if (_mem[t] && !_mem[t].commonPhrases) _mem[t].commonPhrases = []; });
 
 // ────────────────────────────────────────
 // 데이터 스토어 (in-memory, EMBEDDED_DATA 기준)
@@ -1185,8 +1195,8 @@ const Store = {
   setGuidelines(type,v){ if (_mem[type]) _mem[type].guidelines = JSON.parse(JSON.stringify(v)); },
   getPopupGuide(type)  { return _mem[type]?.popupGuide ?? []; },
   setPopupGuide(type,v){ if (_mem[type]) _mem[type].popupGuide = v; },
-  getCommonPhrases()   { return _mem.commonPhrases ?? []; },
-  setCommonPhrases(v)  { _mem.commonPhrases = v; },
+  getCommonPhrases(type)   { return _mem[type]?.commonPhrases ?? []; },
+  setCommonPhrases(type,v) { if (_mem[type]) _mem[type].commonPhrases = v; },
 
   _serverUrl: '/admin-data',
 
@@ -5790,7 +5800,11 @@ ${glossaryStr}
         popupGuide: JSON.parse(JSON.stringify(Store.getPopupGuide(t))),
       };
     });
-    this._editSnapshot._commonPhrases = JSON.parse(JSON.stringify(Store.getCommonPhrases()));
+    this._editSnapshot._commonPhrases = {
+      little: JSON.parse(JSON.stringify(Store.getCommonPhrases('little'))),
+      elementary: JSON.parse(JSON.stringify(Store.getCommonPhrases('elementary'))),
+      parent: JSON.parse(JSON.stringify(Store.getCommonPhrases('parent'))),
+    };
     this._editMode = true;
     this._updateEditModeUI();
     this._renderGuideList();
@@ -6187,7 +6201,7 @@ ${glossaryStr}
         Store.setPopupGuide(t, snap.popupGuide);
       });
       if (this._editSnapshot._commonPhrases) {
-        Store.setCommonPhrases(this._editSnapshot._commonPhrases);
+        ['little','elementary','parent'].forEach(t => Store.setCommonPhrases(t, this._editSnapshot._commonPhrases[t]));
       }
       localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     }
@@ -6394,7 +6408,7 @@ ${glossaryStr}
 
   // ── 팝업 문구 ──────────────────────────────────────────────────────
   _renderCommonPhraseList() {
-    const items = Store.getCommonPhrases();
+    const items = Store.getCommonPhrases(this._adminTab);
     const container = document.getElementById('commonphrase-list');
     if (!container) return;
     const em = this._editMode;
@@ -6501,24 +6515,24 @@ ${glossaryStr}
     container.innerHTML = html;
   },
   _saveCommonPhraseField(i, field, val) {
-    const items = Store.getCommonPhrases();
+    const items = Store.getCommonPhrases(this._adminTab);
     if (!items[i]) return;
     items[i][field] = val.trim();
-    Store.setCommonPhrases(items);
+    Store.setCommonPhrases(this._adminTab, items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
   },
   _deleteCpCategory(cat) {
-    const items = Store.getCommonPhrases().filter(it => (it.category?.trim() || '기타') !== cat);
-    Store.setCommonPhrases(items);
+    const items = Store.getCommonPhrases(this._adminTab).filter(it => (it.category?.trim() || '기타') !== cat);
+    Store.setCommonPhrases(this._adminTab, items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderCommonPhraseList();
   },
   _renameCpCategory(oldCat, newCat) {
     newCat = newCat.trim();
     if (!newCat || newCat === oldCat) return;
-    const items = Store.getCommonPhrases();
+    const items = Store.getCommonPhrases(this._adminTab);
     items.forEach(it => { if ((it.category || '기타') === oldCat) it.category = newCat; });
-    Store.setCommonPhrases(items);
+    Store.setCommonPhrases(this._adminTab, items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderCommonPhraseList();
   },
@@ -6528,16 +6542,16 @@ ${glossaryStr}
     const bEl = document.getElementById(catId + '-b');
     const question = qEl?.value.trim() || '';
     if (!question) return;
-    const items = Store.getCommonPhrases();
+    const items = Store.getCommonPhrases(this._adminTab);
     items.push({ category: cat, question, button: bEl?.value.trim() || '' });
-    Store.setCommonPhrases(items);
+    Store.setCommonPhrases(this._adminTab, items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderCommonPhraseList();
   },
   _deleteCommonPhrase(i) {
-    const items = Store.getCommonPhrases();
+    const items = Store.getCommonPhrases(this._adminTab);
     items.splice(i, 1);
-    Store.setCommonPhrases(items);
+    Store.setCommonPhrases(this._adminTab, items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderCommonPhraseList();
   },
@@ -6545,9 +6559,9 @@ ${glossaryStr}
     const catEl = document.getElementById('cp-add-cat');
     const cat = catEl?.value.trim();
     if (!cat) return;
-    const items = Store.getCommonPhrases();
+    const items = Store.getCommonPhrases(this._adminTab);
     items.unshift({ category: cat, question: '', button: '' });
-    Store.setCommonPhrases(items);
+    Store.setCommonPhrases(this._adminTab, items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderCommonPhraseList();
   },
@@ -6608,10 +6622,10 @@ ${glossaryStr}
     e.preventDefault();
     const from = this._cpDragSrc;
     if (from === null || from === i) return;
-    const items = [...Store.getCommonPhrases()];
+    const items = [...Store.getCommonPhrases(this._adminTab)];
     const [moved] = items.splice(from, 1);
     items.splice(i, 0, moved);
-    Store.setCommonPhrases(items);
+    Store.setCommonPhrases(this._adminTab, items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderCommonPhraseList();
   },
@@ -6643,7 +6657,7 @@ ${glossaryStr}
     const from = this._cpGrpDragSrc;
     if (from === null || from === gi) return;
     // 분류 순서 배열 만들기
-    const items = Store.getCommonPhrases();
+    const items = Store.getCommonPhrases(this._adminTab);
     const groups = {};
     const ORDER = [];
     items.forEach(item => {
@@ -6654,7 +6668,7 @@ ${glossaryStr}
     const [movedCat] = ORDER.splice(from, 1);
     ORDER.splice(gi, 0, movedCat);
     const reordered = ORDER.flatMap(cat => groups[cat]);
-    Store.setCommonPhrases(reordered);
+    Store.setCommonPhrases(this._adminTab, reordered);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderCommonPhraseList();
   },
