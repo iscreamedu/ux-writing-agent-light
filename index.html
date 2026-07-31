@@ -6418,11 +6418,11 @@ ${glossaryStr}
           <input type="text" value="${this._esc(item.category || '')}" placeholder="분류"
             class="w-20 flex-shrink-0 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300"
             onblur="App._saveCommonPhraseField(${i},'category',this.value)" />
-          <input type="text" value="${this._esc(item.question || '')}" placeholder="질문"
+          <input type="text" value="${this._esc(item.question || item.text || '')}" placeholder="질문"
             class="flex-1 text-sm text-slate-700 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white"
             onkeydown="if(event.key==='Enter')this.blur()"
             onblur="App._saveCommonPhraseField(${i},'question',this.value)" />
-          <input type="text" value="${this._esc(item.button || '')}" placeholder="버튼"
+          <input type="text" value="${this._esc(item.button || item.note || '')}" placeholder="버튼"
             class="w-24 flex-shrink-0 text-sm text-slate-700 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white"
             onkeydown="if(event.key==='Enter')this.blur()"
             onblur="App._saveCommonPhraseField(${i},'button',this.value)" />
