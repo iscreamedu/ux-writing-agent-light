@@ -6477,12 +6477,12 @@ ${glossaryStr}
                 <textarea placeholder="질문" rows="1" data-cat="${this._esc(cat)}" id="${catId}-q"
                   class="flex-1 text-sm border border-slate-200 rounded px-2.5 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300 resize-none overflow-hidden"
                   style="field-sizing:content;min-height:2rem;"
-                  oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+                  oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';document.getElementById('${catId}-add').disabled=!this.value.trim()"></textarea>
                 <input type="text" placeholder="버튼" id="${catId}-b"
                   class="w-36 flex-shrink-0 text-sm border border-slate-200 rounded px-2.5 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300"
                   onkeydown="if(event.key==='Enter')App._addCpToGroup('${this._esc(cat)}')" />
-                <button onclick="App._addCpToGroup('${this._esc(cat)}')"
-                  class="text-xs px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded transition flex-shrink-0">추가</button>
+                <button id="${catId}-add" disabled onclick="App._addCpToGroup('${this._esc(cat)}')"
+                  class="text-xs px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded transition flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none">추가</button>
               </div>
             </div>
           </div>`;
