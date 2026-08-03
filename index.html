@@ -6522,7 +6522,7 @@ ${glossaryStr}
         </div>`;
       return `
         <div class="border border-slate-200 rounded-lg px-4 py-3 mb-2 bg-white">
-          ${item.title ? `<p class="inline-block text-xs font-semibold px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 mb-2">${this._esc(item.title)}</p>` : ''}
+          ${item.title ? `<p class="inline-block text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-500 border border-indigo-100 mb-2">${this._esc(item.title)}</p>` : ''}
           ${item.content ? `<p class="text-sm text-slate-600">${this._esc(item.content)}</p>` : ''}
           ${item.example ? `<p class="text-xs text-slate-400 mt-1.5 pl-2 border-l-2 border-slate-200">예) ${this._esc(item.example)}</p>` : ''}
         </div>`;
