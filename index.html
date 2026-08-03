@@ -2830,7 +2830,15 @@ const App = {
     ];
     const ADV_PARTICLE = new Set(['에','의','도','만','부','까','처','보','서','로','을','를','은','는','이','가','와','과','고','며','랑','뿐','씩','나','대','마']);
     const advRe = new RegExp(`(${adverbs.join('|')})([가-힣])`, 'g');
-    t = t.replace(advRe, (match, adv, next) => ADV_PARTICLE.has(next) ? match : adv + ' ' + next);
+    const nounDictForAdv = this._buildNounDict();
+    t = t.replace(advRe, (match, adv, next) => {
+      if (ADV_PARTICLE.has(next)) return match;
+      // 부사가 명사의 접두어인 경우(예: 이미지, 이전버튼) 분리하지 않음
+      for (const n of nounDictForAdv) {
+        if (n.length > adv.length && n.startsWith(adv)) return match;
+      }
+      return adv + ' ' + next;
+    });
     // 한글 명사 + UI 외래어 붙여쓰기 자동 분리
     const UI_LW = '데이터|서비스|시스템|콘텐츠|컨텐츠|페이지|버튼|메뉴|모드|파일|탭|링크|아이콘|대시보드|프로필|리스트|카드|팝업|모달|배너|슬라이더|타이머|포인트|레벨|스테이지|미션|챌린지|앱|플랫폼|솔루션|엔진|센터|스쿨|클래스|코스|캠프|랩|스튜디오';
     const LW_EXCEPT = new Set(['홈페이지','로그인','스마트폰','앱스토어','유튜브','카카오톡','인스타그램']);
@@ -3558,17 +3566,14 @@ ${glossaryStr}
         { re: /됬/g,        fix: '됐',     label: '"됬" → "됐" (맞춤법)' },
         { re: /되요/g,       fix: '돼요',   label: '"되요" → "돼요" (맞춤법)' },
         { re: /되었요/g,     fix: '됐어요', label: '"되었요" → "됐어요" (맞춤법)' },
-        { re: /않이/g,       fix: '아니',   label: '"않이" → "아니" (맞춤법)' },
-        { re: /할꺼/g,       fix: '할 거',  label: '"할꺼" → "할 거" (맞춤법)' },
+        { re: /할꺼(?!예)/g, fix: '할 거',  label: '"할꺼" → "할 거" (맞춤법)' },
         { re: /할껀/g,       fix: '할 건',  label: '"할껀" → "할 건" (맞춤법)' },
         { re: /있슴/g,       fix: '있음',   label: '"있슴" → "있음" (맞춤법)' },
         { re: /없슴/g,       fix: '없음',   label: '"없슴" → "없음" (맞춤법)' },
         { re: /왠만/g,       fix: '웬만',   label: '"왠만" → "웬만" (맞춤법)' },
-        { re: /어떻해/g,     fix: '어떡해', label: '"어떻해" → "어떡해" (맞춤법)' },
         { re: /어떻하/g,     fix: '어떡하', label: '"어떻하" → "어떡하" (맞춤법)' },
-        { re: /할께요/g,     fix: '할게요', label: '"할께요" → "할게요" (맞춤법)' },
         { re: /할꺼예요/g,   fix: '할 거예요', label: '"할꺼예요" → "할 거예요" (맞춤법)' },
-        { re: /안되/g,       fix: '안 돼', label: '"안되" → "안 돼" (맞춤법)' },
+        { re: /(?<![가-힣])안되(?=[^는던도]|$)/g, fix: '안 돼', label: '"안되" → "안 돼" (맞춤법)' },
       ];
       for (const { re, fix, label } of commonTypos) {
         if (re.test(trimmed)) {
