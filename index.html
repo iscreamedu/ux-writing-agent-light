@@ -3016,6 +3016,8 @@ const App = {
       const advList = ['이미','아직','매우','너무','정말','진짜','모두','항상','바로','빨리','자주','먼저','함께','같이','계속','더욱','꼭','꽤','곧','늘','다시','또한','매일','별로','보통','서로','아마','역시','이제','전혀','조금','주로','직접','처음','특히','혼자','충분히','절대','반드시','항상','언제나','가끔','잠깐','잠시','열심히','빨리','천천히','갑자기','이번','저번','다음','이전','최근','현재','매번','지난','올해','작년','내년','매년','오늘','내일','어제','방금','지금','앞으로','이후','이상'];
       const ADV_PTL = new Set(['에','의','도','만','부','까','처','보','서','로','을','를','은','는','이','가','와','과','고','며','랑','뿐','씩','나','대','마']);
       let r = w.replace(new RegExp(`(${advList.join('|')})([가-힣])`, 'g'), (m, adv, next) => ADV_PTL.has(next) ? m : adv + ' ' + next);
+      // 보조용언 띄어쓰기
+      r = r.replace(/되어있/g, '되어 있').replace(/돼있/g, '돼 있').replace(/([가-힣])해있/g, '$1해 있');
       // 외래어 띄어쓰기
       r = r.replace(new RegExp(`([가-힣])(${UI_LOANWORDS})`, 'g'), (_, p, lw) => {
         if (LOANWORD_EXCEPTIONS.has(p + lw)) return p + lw;
@@ -3265,7 +3267,8 @@ const App = {
       issues[i] = { token: fullW, suggestion: fixedW, description: fullW + ' → ' + fixedW, subtype: 'spacing' };
     }
 
-    return { status: 'ok', issues };
+    // token === suggestion 노옵 이슈 제거 (잘못된 데이터 방어)
+    return { status: 'ok', issues: issues.filter(i => i.token !== i.suggestion) };
   },
 
   _fixEoyoAfterGuide(items) {
@@ -3428,11 +3431,12 @@ const App = {
           const base = item.improved || text;
           if (base.includes(sp.token)) {
             item.improved = base.split(sp.token).join(sp.suggestion);
-          } else if (base === text) {
-            // 가이드가 아직 텍스트를 바꾸지 않은 경우에만 diff 적용
-            item.improved = this._applySpellDiff(base, sp.token, sp.suggestion);
+          } else if (base === text || sp.subtype === 'spacing') {
+            // spacing 이슈는 가이드가 텍스트를 바꾼 후에도 diff 적용 (띄어쓰기는 어미 변환과 독립)
+            const diffed = this._applySpellDiff(base, sp.token, sp.suggestion);
+            if (diffed !== base) item.improved = diffed;
           }
-          // 가이드가 이미 텍스트를 바꿨으면 spell diff 적용 안 함 (잘못된 교정 방지)
+          // 맞춤법 이슈: 가이드가 이미 텍스트를 바꿨으면 diff 적용 안 함 (잘못된 교정 방지)
         }
       });
     });
