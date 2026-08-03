@@ -3648,7 +3648,23 @@ ${glossaryStr}
               const suggestion = this._morphAwareSuggestion(trimmedNorm, badCore, t.good, m[0]);
               const simpleSwap = trimmedNorm.replace(re, t.good);
               const _badCore = badCore, _good = t.good, _matched = m[0];
-              const _applyTo = text => this._morphAwareSuggestion(text, _badCore, _good, _matched);
+              const _applyTo = text => {
+                // 1차: 원래 매칭된 형태로 시도
+                const r1 = this._morphAwareSuggestion(text, _badCore, _good, _matched);
+                if (r1 !== text) return r1;
+                // 2차: 다른 규칙이 먼저 어미를 바꿨을 때(예: 마치겠습니다→마치겠어요) — 동사 어근만 추출해 재시도
+                // 한국어 동사 어미 패턴을 제거해 어근 추출
+                const stem = _badCore.replace(/(?:겠습니다|겠어요|겠어|습니다|합니다|해요|하다|했습니다|했어요|됩니다|됐습니다|됐어요|되다|세요|하세요|할게요|할게|할까요|할까|해봐|해봐요|하자|하지|하고|하면|하여|해서|하는|하기|하러|하니|하니까|하니깐|하므로|이에요|예요|이야|이다|이고|이라|이면|이라면|어요|아요|어|아|[.!?])*$/, '');
+                if (stem && stem !== _badCore && stem.length >= 2) {
+                  const stemRe = new RegExp(stem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[가-힣]*[.!?]?', 'i');
+                  const stemMatch = text.match(stemRe);
+                  if (stemMatch) {
+                    const goodStem = _good.replace(/(?:겠습니다|겠어요|겠어|ㄹ게요|ㄹ게|ㄹ까요|ㄹ까|할게요|할게|할까요|할까|해봐|합니다|해요|[.!?])*$/, '') || _good;
+                    return this._morphAwareSuggestion(text, stem, goodStem, stemMatch[0]);
+                  }
+                }
+                return text;
+              };
               const matchedPunct = (m[0].match(/[.!?]+$/) || [''])[0];
               const goodDisplay = matchedPunct ? t.good.replace(/[.!?]*$/, '') + matchedPunct : t.good;
               issues.push({ type:'ux_writing', severity:'warning', description:`"${m[0]}" → "${goodDisplay}" (${rule})`, suggestion, _applyTo, reason: g.reason || '', guideTitle: g.rule || '' });
