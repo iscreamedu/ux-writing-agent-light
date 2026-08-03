@@ -388,7 +388,8 @@
         "category": "평가",
         "question": "학습창을 닫을까요?",
         "button": "네, 아니요",
-        "subtitle": "닫아도 다음이 이어서 풀 수 있어요."
+        "subtitle": "닫아도 다음이 이어서 풀 수 있어요.",
+        "condition": "학습 중간에 종료 시"
       },
       {
         "category": "평가",
