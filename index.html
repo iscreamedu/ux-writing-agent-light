@@ -3707,6 +3707,26 @@ ${glossaryStr}
         }
       });
 
+      // 중복 이슈 제거: 더 긴 패턴이 이미 같은 텍스트를 커버하면 짧은 패턴 이슈 제거
+      // (예: "마치겠습니다." 이슈가 있으면 "습니다." 이슈는 불필요)
+      const toRemove = new Set();
+      issues.forEach((a, ai) => {
+        const aMatch = a.description.match(/^"([^"]+)"/);
+        if (!aMatch) return;
+        issues.forEach((b, bi) => {
+          if (ai === bi) return;
+          const bMatch = b.description.match(/^"([^"]+)"/);
+          if (!bMatch) return;
+          // b의 매칭 텍스트가 a의 매칭 텍스트를 포함하면 a 제거
+          if (bMatch[1].includes(aMatch[1]) && bMatch[1].length > aMatch[1].length) {
+            toRemove.add(ai);
+          }
+        });
+      });
+      const filteredIssues = issues.filter((_, i) => !toRemove.has(i));
+      issues.length = 0;
+      filteredIssues.forEach(i => issues.push(i));
+
       let improved = original;
       const hasForbidden = issues.some(i => i.type === 'forbidden');
       issues.forEach(issue => {
