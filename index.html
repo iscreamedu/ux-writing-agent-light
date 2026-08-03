@@ -3495,8 +3495,8 @@ ${glossaryStr}
     for (const line of text.split('\n')) {
       const trimmed = line.trim();
       if (!trimmed) continue;
-      // 문장 종결 부호로 분리 (마침표·느낌표·물음표 뒤 공백 기준)
-      const sentences = trimmed.split(/(?<=[.!?。])\s+/);
+      // 문장 종결 부호로 분리 (마침표·느낌표·물음표 뒤 공백 또는 한글 시작 기준)
+      const sentences = trimmed.split(/(?<=[.!?。])(?:\s+|(?=[가-힣]))/);
       if (sentences.length > 1) {
         sentences.forEach(s => { if (s.trim()) units.push(s.trim()); });
       } else {
