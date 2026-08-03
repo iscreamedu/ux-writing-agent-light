@@ -3025,9 +3025,7 @@ const App = {
       });
       return r;
     };
-    console.log('[LW-TEXT]', JSON.stringify(text.slice(0,30)));
     scanRegex(new RegExp(`([가-힣])(${UI_LOANWORDS})`, 'g'), m => {
-      console.log('[LW-MATCH]', m[0], 'idx:', m.index);
       // 앞에 공백이 있으면 이미 띄어쓴 것
       const before = text.slice(0, m.index);
       if (before.endsWith(' ')) return;
@@ -3038,7 +3036,6 @@ const App = {
       while (wordEnd < text.length && !/\s/.test(text[wordEnd])) wordEnd++;
       const fullWord = text.slice(wordStart, wordEnd);
       const fixedWord = _lwFixWord(fullWord);
-      console.log('[LW] fullWord:', fullWord, '→', fixedWord);
       if (fixedWord === fullWord) return;
       addIssue(fullWord, fixedWord, '', 'spacing');
     });
