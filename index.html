@@ -6452,15 +6452,21 @@ ${glossaryStr}
             <span class="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-400 flex-shrink-0 flex items-center mt-1.5 select-none"
               onmousedown="document.getElementById('cp-row-${idx}').setAttribute('draggable','true')"
               onmouseup="document.getElementById('cp-row-${idx}').setAttribute('draggable','false')">${GRIP}</span>
-            <textarea placeholder="질문" rows="1"
-              class="flex-1 text-sm text-slate-700 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white resize-none overflow-hidden"
-              style="field-sizing:content;min-height:2rem;"
-              onblur="App._saveCommonPhraseField(${idx},'question',this.value)"
-              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
-              onfocus="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
-              >${this._esc(item.question || item.text || '')}</textarea>
+            <div class="flex-1 flex flex-col gap-1 min-w-0">
+              <textarea placeholder="질문" rows="1"
+                class="w-full text-sm text-slate-700 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white resize-none overflow-hidden"
+                style="field-sizing:content;min-height:2rem;"
+                onblur="App._saveCommonPhraseField(${idx},'question',this.value)"
+                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+                onfocus="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+                >${this._esc(item.question || item.text || '')}</textarea>
+              <input type="text" value="${this._esc(item.subtitle || '')}" placeholder="설명 (팝업 내 작은 텍스트, 선택)"
+                class="w-full text-xs text-slate-500 border border-slate-200 rounded px-2 py-1 outline-none focus:border-indigo-300 bg-slate-50 placeholder-slate-300"
+                onkeydown="if(event.key==='Enter')this.blur()"
+                onblur="App._saveCommonPhraseField(${idx},'subtitle',this.value)" />
+            </div>
             <input type="text" value="${this._esc(item.button || item.note || '')}" placeholder="버튼"
-              class="w-36 flex-shrink-0 text-sm text-slate-700 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white mt-0.5"
+              class="w-28 flex-shrink-0 text-sm text-slate-700 border border-slate-200 rounded px-2 py-1.5 outline-none focus:border-indigo-300 bg-white mt-0.5"
               onkeydown="if(event.key==='Enter')this.blur()"
               onblur="App._saveCommonPhraseField(${idx},'button',this.value)" />
             <button onclick="App._deleteCommonPhrase(${idx})" class="flex-shrink-0 text-slate-300 hover:text-red-400 p-0.5 rounded transition-colors mt-1" title="삭제">${TRASH}</button>
@@ -6484,12 +6490,16 @@ ${glossaryStr}
             ${itemRows}
             <div class="px-3 py-2 border-t border-slate-100 bg-white">
               <div class="flex gap-1.5">
-                <textarea placeholder="질문" rows="1" data-cat="${this._esc(cat)}" id="${catId}-q"
-                  class="flex-1 text-sm border border-slate-200 rounded px-2.5 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300 resize-none overflow-hidden"
-                  style="field-sizing:content;min-height:2rem;"
-                  oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';document.getElementById('${catId}-add').disabled=!this.value.trim()"></textarea>
+                <div class="flex-1 flex flex-col gap-1 min-w-0">
+                  <textarea placeholder="질문" rows="1" data-cat="${this._esc(cat)}" id="${catId}-q"
+                    class="w-full text-sm border border-slate-200 rounded px-2.5 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300 resize-none overflow-hidden"
+                    style="field-sizing:content;min-height:2rem;"
+                    oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';document.getElementById('${catId}-add').disabled=!this.value.trim()"></textarea>
+                  <input type="text" placeholder="설명 (선택)" id="${catId}-s"
+                    class="w-full text-xs border border-slate-200 rounded px-2.5 py-1 outline-none focus:border-indigo-300 bg-slate-50 text-slate-500 placeholder-slate-300" />
+                </div>
                 <input type="text" placeholder="버튼" id="${catId}-b"
-                  class="w-36 flex-shrink-0 text-sm border border-slate-200 rounded px-2.5 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300"
+                  class="w-28 flex-shrink-0 text-sm border border-slate-200 rounded px-2.5 py-1.5 outline-none focus:border-indigo-300 bg-white text-slate-700 placeholder-slate-300"
                   onkeydown="if(event.key==='Enter')App._addCpToGroup('${this._esc(cat)}')" />
                 <button id="${catId}-add" disabled onclick="App._addCpToGroup('${this._esc(cat)}')"
                   class="text-xs px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded transition flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none">추가</button>
@@ -6514,16 +6524,19 @@ ${glossaryStr}
     items.forEach(item => {
       const cat = item.category?.trim() || '기타';
       if (!groups[cat]) { groups[cat] = []; ORDER.push(cat); }
-      groups[cat].push({ question: item.question || item.text || '', button: (item.button || item.note || '').trim() });
+      groups[cat].push({ question: item.question || item.text || '', subtitle: item.subtitle || '', button: (item.button || item.note || '').trim() });
     });
     const html = ORDER.map(cat => `
       <div class="border border-slate-200 rounded-lg overflow-hidden mb-4">
         <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
           <span class="text-sm font-semibold text-slate-700">${this._esc(cat)}</span>
         </div>
-        ${groups[cat].map(({ question, button }) => `
+        ${groups[cat].map(({ question, subtitle, button }) => `
           <div class="flex items-center gap-3 px-4 py-2.5 border-b border-slate-100 last:border-0">
-            <span class="flex-1 text-sm text-slate-700">${this._esc(question)}</span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-slate-700">${this._esc(question)}</p>
+              ${subtitle ? `<p class="text-xs text-slate-400 mt-0.5">${this._esc(subtitle)}</p>` : ''}
+            </div>
             ${button ? `<span class="text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-500 border border-slate-200 flex-shrink-0 whitespace-nowrap">${this._esc(button)}</span>` : ''}
           </div>`).join('')}
       </div>`).join('');
@@ -6554,11 +6567,12 @@ ${glossaryStr}
   _addCpToGroup(cat) {
     const catId = 'cpg-' + btoa(unescape(encodeURIComponent(cat))).replace(/[^a-zA-Z0-9]/g,'').slice(0,12);
     const qEl = document.getElementById(catId + '-q');
+    const sEl = document.getElementById(catId + '-s');
     const bEl = document.getElementById(catId + '-b');
     const question = qEl?.value.trim() || '';
     if (!question) return;
     const items = Store.getCommonPhrases(this._adminTab);
-    items.push({ category: cat, question, button: bEl?.value.trim() || '' });
+    items.push({ category: cat, question, subtitle: sEl?.value.trim() || '', button: bEl?.value.trim() || '' });
     Store.setCommonPhrases(this._adminTab, items);
     localStorage.setItem('ux_guide_data', JSON.stringify(_mem));
     this._renderCommonPhraseList();
