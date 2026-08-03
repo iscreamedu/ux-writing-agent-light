@@ -3548,9 +3548,35 @@ ${glossaryStr}
         issues.push({ type:'spelling', severity:'error', description:'"아니오" → "아니요" (표준어)', suggestion: fixed, _applyTo: text => text.replace(/아니오/g, '아니요') });
       }
 
-      if (/오느\s/.test(trimmed) || /오느$/.test(trimmed)) {
+      if (/오느(?:\s|$)/.test(trimmed)) {
         const fixed = trimmed.replace(/오느(\s|$)/g, '오늘$1');
         issues.push({ type:'spelling', severity:'error', description:'"오느" → "오늘" (오타)', suggestion: fixed, _applyTo: text => text.replace(/오느(\s|$)/g, '오늘$1') });
+      }
+
+      // 흔한 오타/맞춤법 오류
+      const commonTypos = [
+        { re: /됬/g,        fix: '됐',     label: '"됬" → "됐" (맞춤법)' },
+        { re: /되요/g,       fix: '돼요',   label: '"되요" → "돼요" (맞춤법)' },
+        { re: /되었요/g,     fix: '됐어요', label: '"되었요" → "됐어요" (맞춤법)' },
+        { re: /않이/g,       fix: '아니',   label: '"않이" → "아니" (맞춤법)' },
+        { re: /할꺼/g,       fix: '할 거',  label: '"할꺼" → "할 거" (맞춤법)' },
+        { re: /할껀/g,       fix: '할 건',  label: '"할껀" → "할 건" (맞춤법)' },
+        { re: /있슴/g,       fix: '있음',   label: '"있슴" → "있음" (맞춤법)' },
+        { re: /없슴/g,       fix: '없음',   label: '"없슴" → "없음" (맞춤법)' },
+        { re: /왠만/g,       fix: '웬만',   label: '"왠만" → "웬만" (맞춤법)' },
+        { re: /어떻해/g,     fix: '어떡해', label: '"어떻해" → "어떡해" (맞춤법)' },
+        { re: /어떻하/g,     fix: '어떡하', label: '"어떻하" → "어떡하" (맞춤법)' },
+        { re: /할께요/g,     fix: '할게요', label: '"할께요" → "할게요" (맞춤법)' },
+        { re: /할꺼예요/g,   fix: '할 거예요', label: '"할꺼예요" → "할 거예요" (맞춤법)' },
+        { re: /안되/g,       fix: '안 돼', label: '"안되" → "안 돼" (맞춤법)' },
+      ];
+      for (const { re, fix, label } of commonTypos) {
+        if (re.test(trimmed)) {
+          re.lastIndex = 0;
+          const fixed = trimmed.replace(re, fix);
+          const _re = re;
+          issues.push({ type:'spelling', severity:'error', description: label, suggestion: fixed, _applyTo: text => { _re.lastIndex=0; return text.replace(_re, fix); } });
+        }
       }
 
 
