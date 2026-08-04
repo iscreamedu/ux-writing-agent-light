@@ -2741,7 +2741,9 @@ const App = {
     });
     // 3) 명사 사전 기반 복합명사 자동 분리
     result = this._splitCompoundNouns(result);
-    // 4) 한국어 조사/어미 기반 자동 띄어쓰기
+    // 4) 보조용언 띄어쓰기 (가이드 재적용 후 되돌려진 경우 재교정)
+    result = result.replace(/되어있/g, '되어 있').replace(/돼있/g, '돼 있').replace(/([가-힣])해있/g, '$1해 있');
+    // 5) 한국어 조사/어미 기반 자동 띄어쓰기
     result = this._autoKoreanSpacing(result);
     return result;
   },
@@ -2959,9 +2961,9 @@ const App = {
       scanRegex(re, m => addIssue(m[0], right, desc));
     }
     // 께요/껄요/껀데요 → 게요/걸요/건데요 (ㄱ/ㄲ 어미 혼동, 모든 동사에 적용)
-    scanRegex(/[가-힣]께요/g, m => addIssue(m[0], m[0].replace('께요', '게요'), `'${m[0]}'는 틀린 표현이에요. '${m[0].replace('께요','게요')}'로 써야 해요.`));
-    scanRegex(/[가-힣]껄요/g, m => addIssue(m[0], m[0].replace('껄요', '걸요'), `'${m[0]}'는 틀린 표현이에요. '${m[0].replace('껄요','걸요')}'로 써야 해요.`));
-    scanRegex(/[가-힣]껀데요/g, m => addIssue(m[0], m[0].replace('껀데요', '건데요'), `'${m[0]}'는 틀린 표현이에요. '${m[0].replace('껀데요','건데요')}'로 써야 해요.`));
+    scanRegex(/[가-힣]+께요/g, m => addIssue(m[0], m[0].replace('께요', '게요'), `'${m[0]}'는 틀린 표현이에요. '${m[0].replace('께요','게요')}'로 써야 해요.`));
+    scanRegex(/[가-힣]+껄요/g, m => addIssue(m[0], m[0].replace('껄요', '걸요'), `'${m[0]}'는 틀린 표현이에요. '${m[0].replace('껄요','걸요')}'로 써야 해요.`));
+    scanRegex(/[가-힣]+껀데요/g, m => addIssue(m[0], m[0].replace('껀데요', '건데요'), `'${m[0]}'는 틀린 표현이에요. '${m[0].replace('껀데요','건데요')}'로 써야 해요.`));
 
     // ── 기타 자주 틀리는 표현 ────────────────────────────────────────────────
     const misc = [
