@@ -2893,6 +2893,7 @@ const App = {
       if (!seen.has(key)) {
         seen.add(key);
         const displayDesc = token + ' → ' + suggestion;
+        console.log('[spell]', token, '->', suggestion, '| subtype:', subtype, new Error().stack.split('\n')[2]);
         issues.push({ token, suggestion, description: displayDesc, subtype: subtype || 'spell' });
       }
     }
