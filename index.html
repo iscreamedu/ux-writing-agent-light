@@ -2614,6 +2614,16 @@ const App = {
     this._renderInputHighlight(text, spell.issues);
     this._renderSpellStatus(spell);
 
+    // spacing 이슈 description을 최종 개선안으로 업데이트 (맞춤법 교정도 반영)
+    result.items.forEach(item => {
+      if (!item.improved || item.improved === item.original) return;
+      item.issues.forEach(issue => {
+        if (issue.subtype === 'spacing') {
+          issue.description = `${item.original} → ${item.improved}`;
+        }
+      });
+    });
+
     State.analysisResult = result;
     this._renderResults(result);
     document.getElementById('results-spinner').classList.add('hidden');
