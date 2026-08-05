@@ -864,21 +864,11 @@ textarea:focus, input:focus, select:focus {
   <div class="bg-white rounded-2xl shadow-2xl w-full slide-in flex flex-col" style="width:70vw;max-height:90vh">
     <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100 flex-shrink-0">
       <p class="text-sm font-bold text-slate-800">팝업 템플릿 가이드</p>
-      <div class="flex items-center gap-3">
-        <span id="popup-guide-page-indicator" class="text-xs text-slate-400">1 / 7</span>
-        <button onclick="App._hidePopupGuideModal()" class="text-slate-300 hover:text-slate-500 transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
+      <button onclick="App._hidePopupGuideModal()" class="text-slate-300 hover:text-slate-500 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
     </div>
-    <div class="relative flex-1 overflow-hidden flex items-center justify-center bg-slate-50 rounded-b-2xl">
-      <img id="popup-guide-img" src="" alt="팝업 가이드" class="max-w-full max-h-full object-contain" style="max-height:calc(95vh - 56px)" />
-      <button onclick="App._popupGuidePrev()" id="popup-guide-prev" class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white rounded-full shadow flex items-center justify-center text-slate-600 hover:text-slate-900 transition disabled:opacity-30" disabled>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <button onclick="App._popupGuideNext()" id="popup-guide-next" class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white rounded-full shadow flex items-center justify-center text-slate-600 hover:text-slate-900 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-      </button>
+    <div id="popup-guide-scroll" class="flex-1 overflow-y-auto bg-slate-50 rounded-b-2xl flex flex-col gap-3 p-4">
     </div>
   </div>
 </div>
@@ -6095,33 +6085,24 @@ ${glossaryStr}
   ],
   _popupGuidePage: 0,
   _showPopupGuideModal() {
-    this._popupGuidePage = 0;
-    this._renderPopupGuideCarousel();
+    this._renderPopupGuideScroll();
     const modal = document.getElementById('modal-popup-guide');
     if (!modal) return;
     modal.classList.remove('hidden');
+    const scroll = document.getElementById('popup-guide-scroll');
+    if (scroll) scroll.scrollTop = 0;
     modal.onclick = (e) => { if (e.target === modal) this._hidePopupGuideModal(); };
   },
   _hidePopupGuideModal() {
     document.getElementById('modal-popup-guide')?.classList.add('hidden');
   },
-  _renderPopupGuideCarousel() {
+  _renderPopupGuideScroll() {
     const imgs = this._popupGuideImages;
-    const i = this._popupGuidePage;
-    const img = document.getElementById('popup-guide-img');
-    const ind = document.getElementById('popup-guide-page-indicator');
-    const prev = document.getElementById('popup-guide-prev');
-    const next = document.getElementById('popup-guide-next');
-    if (img) img.src = imgs[i];
-    if (ind) ind.textContent = (i + 1) + ' / ' + imgs.length;
-    if (prev) prev.disabled = i === 0;
-    if (next) next.disabled = i === imgs.length - 1;
-  },
-  _popupGuidePrev() {
-    if (this._popupGuidePage > 0) { this._popupGuidePage--; this._renderPopupGuideCarousel(); }
-  },
-  _popupGuideNext() {
-    if (this._popupGuidePage < this._popupGuideImages.length - 1) { this._popupGuidePage++; this._renderPopupGuideCarousel(); }
+    const container = document.getElementById('popup-guide-scroll');
+    if (!container) return;
+    container.innerHTML = imgs.map(src =>
+      `<img src="${src}" alt="팝업 가이드" class="w-full rounded-lg shadow-sm object-contain bg-white" />`
+    ).join('');
   },
   _showConfirm(title, desc, onOk) {
     const modal = document.getElementById('modal-confirm');
