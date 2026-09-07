@@ -6510,6 +6510,8 @@ ${glossaryStr}
 
   setAdminSection(sec) {
     this._adminSection = sec;
+    const si = document.getElementById('guide-search-input');
+    if (si && si.value) { si.value = ''; this._guideSearch(''); }
     const sections = ['guide', 'popup', 'commonphrase', 'forbidden'];
     sections.forEach(s => {
       const tab = document.getElementById(`asec-${s}`);
