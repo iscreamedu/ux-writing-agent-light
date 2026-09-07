@@ -3536,7 +3536,7 @@ ${glossaryStr}
         sentences.forEach(s => { if (s.trim()) units.push(s.trim()); });
       } else {
         // 공백으로 구분된 단어/구 단위 (20자 이하 & 공백 포함 시 분리)
-        const words = trimmed.split(/\s{2,}|,\s*/);
+        const words = trimmed.split(/\s{2,}/);
         if (words.length > 1 && trimmed.length <= 60) {
           words.forEach(w => { if (w.trim()) units.push(w.trim()); });
         } else {
@@ -3580,7 +3580,7 @@ ${glossaryStr}
 
       if (/아니오/.test(trimmed)) {
         const fixed = trimmed.replace(/아니오/g, '아니요');
-        issues.push({ type:'spelling', severity:'error', description:'"아니오" → "아니요" (표준어)', suggestion: fixed, _applyTo: text => text.replace(/아니오/g, '아니요') });
+        issues.push({ type:'spelling', subtype:'standard', severity:'error', description:'"아니오" → "아니요" (표준어)', suggestion: fixed, _applyTo: text => text.replace(/아니오/g, '아니요') });
       }
 
       if (/오느(?:\s|$)/.test(trimmed)) {
@@ -5070,6 +5070,7 @@ ${glossaryStr}
     });
 
     const _spellStyle = issue => issue.subtype === 'spacing' ? 'color:#10b981'
+      : issue.subtype === 'standard' ? 'color:#9c4dcc'
       : 'color:#f97316';
 
     // 맞춤법: suggestion 단어 → 색상 매핑
