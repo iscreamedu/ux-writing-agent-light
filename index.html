@@ -5275,13 +5275,8 @@ ${glossaryStr}
                    this._esc(punct);
           }
         }
-        // 어근 못 찾으면 끝 조사만 분리
-        const KO_JOSA = ['이라도','라도','으로부터','로부터','한테서','에게서','에서도','에게도','에서','에게','한테','이고','이며','이면','이나','이라','이랑','이란','이야','이든','으로도','로도','에도','에만','에는','부터','까지','으로','로','이에요','예요','이','가','을','를','은','는','와','과','에','도','만','의'];
-        let stem = wClean, josa = '';
-        for (const p of KO_JOSA) {
-          if (wClean.endsWith(p) && wClean.length > p.length) { stem = wClean.slice(0, -p.length); josa = p; break; }
-        }
-        return `<span style="${uxMarkStyle}">${this._esc(stem)}</span>${this._esc(josa)}${this._esc(punct)}`;
+        // 원문과 공통 부분이 전혀 없으면 → 이 단어 전체가 새로 생긴 것이므로 전체 강조
+        return `<span style="${uxMarkStyle}">${this._esc(wClean)}</span>${this._esc(punct)}`;
       }
 
       // UX Writing 미변경 단어에만 맞춤법 색상 적용
