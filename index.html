@@ -5073,12 +5073,13 @@ ${glossaryStr}
       : issue.subtype === 'standard' ? 'color:#9c4dcc'
       : 'color:#f97316';
 
-    // 맞춤법: suggestion 단어 → 색상 매핑
+    // 맞춤법: suggestion 단어 → 색상 매핑 (원문에 동일하게 있는 단어는 제외 — 바뀌지 않은 단어 강조 방지)
+    const origWordSet = new Set(original.split(/\s+/).filter(Boolean));
     const spellMap = new Map();
     (issues || []).filter(i => i.type === 'spelling').forEach(i => {
       const suggStr = i.suggestion || '';
       suggStr.split(/\s+/).filter(Boolean).forEach(sw => {
-        if (!spellMap.has(sw)) spellMap.set(sw, _spellStyle(i));
+        if (!spellMap.has(sw) && !origWordSet.has(sw)) spellMap.set(sw, _spellStyle(i));
       });
     });
     // spellPrefixMap: wCore → { style, stemLen } — 교정 제안어가 단어의 접두사인 경우
