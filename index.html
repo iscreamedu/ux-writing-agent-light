@@ -3720,7 +3720,7 @@ ${glossaryStr}
               };
               const matchedPunct = (m[0].match(/[.!?]+$/) || [''])[0];
               const goodDisplay = matchedPunct ? t.good.replace(/[.!?]*$/, '') + matchedPunct : t.good;
-              issues.push({ type:'ux_writing', severity:'warning', description:`"${badCore}" → "${goodDisplay}" (${rule})`, suggestion, _applyTo, reason: g.reason || '', guideTitle: g.rule || '' });
+              issues.push({ type:'ux_writing', severity:'warning', description:`"${badCore}" → "${goodDisplay}" (${rule})`, suggestion, _applyTo, reason: g.reason || '', guideTitle: g.rule || '', _bad: badCore, _good: t.good });
               break; // 한 term당 첫 번째 매칭만
             }
           });
@@ -5105,6 +5105,11 @@ ${glossaryStr}
 
     const hasUX = (issues || []).some(i => ['ux_writing','term_policy'].includes(i.type));
     const hasForbidden = (issues || []).some(i => i.type === 'forbidden');
+    // ux_writing 이슈의 _good 단어 목록 (하이라이트 범위 결정용)
+    const uxGoodWords = hasUX
+      ? (issues || []).filter(i => i.type === 'ux_writing' && i._good)
+          .map(i => i._good.replace(/[.!?,。]+$/, '')).filter(Boolean)
+      : [];
 
     // 금지어 단어 집합
     const forbiddenWords = new Set();
@@ -5200,6 +5205,14 @@ ${glossaryStr}
         // 원문 단어와 공통 접두사(어근)를 구해 변경된 접미사만 하이라이트
         const wClean = w.replace(/[.!?,。]+$/, '');
         const punct = w.slice(wClean.length);
+        // ux_writing 이슈의 _good 단어가 이 단어 내부에 있으면 그 위치부터 강조 (예: 되었어요. → 되었 시작점)
+        for (const gw of uxGoodWords) {
+          const idx = wClean.indexOf(gw);
+          if (idx >= 0) {
+            const prefix = idx > 0 ? this._esc(wClean.slice(0, idx)) : '';
+            return prefix + `<span style="${uxMarkStyle}">${this._esc(wClean.slice(idx) + punct)}</span>`;
+          }
+        }
         let origStem = '', changedSuffix = wClean;
         let commonSuffix = '';
         for (const ow of origWords) {
