@@ -5175,7 +5175,11 @@ ${glossaryStr}
       const isUXChanged = hasUX && !isOriginal;
 
       // spellMap에 있으면 맞춤법/띄어쓰기 색상 우선 (띄어쓰기로 분리된 단어도 포함)
-      if (spellStyleEarly) return `<span style="${spellStyleEarly}">${this._esc(w)}</span>`;
+      if (spellStyleEarly) {
+        const wCore2 = w.replace(/[.!?,。]+$/, '');
+        const wPunct2 = w.slice(wCore2.length);
+        return `<span style="${spellStyleEarly}">${this._esc(wCore2)}</span>${this._esc(wPunct2)}`;
+      }
 
       // 교정 제안어가 단어 접두사인 경우: 어간만 색상, 어미/조사는 색상 없음
       const prefixMatch = spellPrefixMap.get(wCore);
