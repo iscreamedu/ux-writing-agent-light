@@ -5206,12 +5206,18 @@ ${glossaryStr}
         // 원문 단어와 공통 접두사(어근)를 구해 변경된 접미사만 하이라이트
         const wClean = w.replace(/[.!?,。]+$/, '');
         const punct = w.slice(wClean.length);
-        // ux_writing 이슈의 _good 단어가 이 단어 내부에 있으면 그 위치부터 강조 (예: 되었어요. → 되었 시작점)
+        // ux_writing 이슈의 _good 단어가 이 단어 내부에 있으면 그 부분만 강조
+        // - 앞부분(prefix)·뒷부분(suffix 조사 등)은 강조 없음
+        // - 단, _good이 단어 끝까지 이어지면(접미사 변경) 끝까지 강조
         for (const gw of uxGoodWords) {
           const idx = wClean.indexOf(gw);
           if (idx >= 0) {
-            const prefix = idx > 0 ? this._esc(wClean.slice(0, idx)) : '';
-            return prefix + `<span style="${uxMarkStyle}">${this._esc(wClean.slice(idx) + punct)}</span>`;
+            const prefix = this._esc(wClean.slice(0, idx));
+            const gwEnd = idx + gw.length;
+            const isEndOfWord = gwEnd >= wClean.length;
+            const highlighted = this._esc(wClean.slice(idx, gwEnd));
+            const suffix = this._esc(wClean.slice(gwEnd)) + this._esc(punct);
+            return prefix + `<span style="${uxMarkStyle}">${highlighted}</span>` + suffix;
           }
         }
         let origStem = '', changedSuffix = wClean;
