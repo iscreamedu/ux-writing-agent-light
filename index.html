@@ -3720,7 +3720,7 @@ ${glossaryStr}
               };
               const matchedPunct = (m[0].match(/[.!?]+$/) || [''])[0];
               const goodDisplay = matchedPunct ? t.good.replace(/[.!?]*$/, '') + matchedPunct : t.good;
-              issues.push({ type:'ux_writing', severity:'warning', description:`"${m[0]}" → "${goodDisplay}" (${rule})`, suggestion, _applyTo, reason: g.reason || '', guideTitle: g.rule || '' });
+              issues.push({ type:'ux_writing', severity:'warning', description:`"${badCore}" → "${goodDisplay}" (${rule})`, suggestion, _applyTo, reason: g.reason || '', guideTitle: g.rule || '' });
               break; // 한 term당 첫 번째 매칭만
             }
           });
