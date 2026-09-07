@@ -2614,6 +2614,28 @@ const App = {
       });
     });
 
+    // 개선안에 남아있는 금지어 재검사
+    const KO_PARTS = /^[로으에서게한테부터까지도만이가을를은는와과하해했할함합되된됩됐입인임]/;
+    result.items.forEach(item => {
+      if (!item.improved) return;
+      const improvedLower = item.improved.toLowerCase();
+      Store.getForbiddenCategories(State.userType).forEach(cat => {
+        (cat.words || []).forEach(w => {
+          const wLower = w.toLowerCase();
+          const idx = improvedLower.indexOf(wLower);
+          if (idx === -1) return;
+          const afterChar = improvedLower[idx + wLower.length];
+          if (afterChar && /[가-힣]/.test(afterChar) && !KO_PARTS.test(afterChar)) return;
+          const label = cat.category || '금지어';
+          const already = item.issues.some(i => i.type === 'forbidden' && i.description.includes(w));
+          if (!already) {
+            item.issues.push({ type: 'forbidden', severity: 'error', description: `"${w}" 사용 금지 (${label})`, suggestion: '', reason: cat.reason || '' });
+            item.hasIssues = true;
+          }
+        });
+      });
+    });
+
     State.analysisResult = result;
     this._renderResults(result);
     document.getElementById('results-spinner').classList.add('hidden');
